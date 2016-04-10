@@ -4,7 +4,7 @@ from django.http import HttpResponse
 import json
 
 def index(request):
-    return HttpResponse("asdfasdf")
+    return render(request, 'cyoa/index.html')
 
 def createAdventure(request): #create new adventure, set the user as the host
     if request.user.is_authenticated() == False:
