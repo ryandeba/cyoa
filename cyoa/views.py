@@ -85,11 +85,17 @@ def declineAdventure(request):
     return []
 
 def load_adventure(request): #load adventure data for the adventure that the user is in (if applicable)
-    adventure = Adventure.objects.get(adventureuser__user=request.user)
-    return {
-        "name": adventure.name,
+    adventure_data = {
+        "name": "",
         "users": [],
         "activities": [],
+    }
+    try: 
+        adventure = Adventure.objects.get(adventureuser__user=request.user)
+        adventure_data = {
+            "name": adventure.name,
+            "users": [],
+            "activities": [],
 #            { #previously selected activity
 #                "name": "activity name",
 #                "url": "url",
@@ -111,8 +117,10 @@ def load_adventure(request): #load adventure data for the adventure that the use
 #                },
 #            ],
 #        ],
-    }
-    return HttpResponse(json.dumps(responseData), content_type="application/json")
+        }
+    except:
+        pass
+    return adventure_data
 
 def startNextActivity(request): #(HOST) pass the location and activity type selections, create activityAdventures
     return []
