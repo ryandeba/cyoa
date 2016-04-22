@@ -94,7 +94,7 @@ def joinAdventure(request): #add request.user to the adventure
 def declineAdventure(request):
     return []
 
-def loadAdventure(request): #load adventure data for the adventure that the user is in (if applicable)
+def load_adventure(request): #load adventure data for the adventure that the user is in (if applicable)
     return {
         "name": "adventure name",
         "users": {},

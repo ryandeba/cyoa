@@ -48,41 +48,45 @@ $(function(){
             this.listenTo(this.vent, "showView", this.showView);
 
             if (userData.username.length == 0){
-                this.showLoginView();
+                this.vent.trigger("showView", "login");
             } else {
-                this.showHomeView();
+                this.vent.trigger("showView", "home");
             }
         },
 
-        showLoginView: function(){
-            this.layoutView.getRegion("main").show(new LoginView({model: this.user}));
-        },
-
-        showProfileView: function(){
-            this.loadProfile();
-            this.layoutView.getRegion("main").show(new ProfileView({model: this.user}));
-        },
-
-        showHomeView: function(){
-            this.layoutView.getRegion("main").show(new HomeView());
-        },
-
-        showNewAdventureView: function(){
-            this.layoutView.getRegion("main").show(new NewAdventureView());
-        },
-
-        showInviteToAdventureView: function(){
-            this.layoutView.getRegion("main").show(new AdventureView());
-        },
-
         showView: function(view){
-            if (view == "profile"){
-                this.showProfileView();
-            } else if (view == "home"){
-                this.showHomeView();
-            } else if (view == "newAdventure"){
-                this.showNewAdventureView();
+            var self = this;
+
+            var views = {
+                "login": {
+                    titleHtml: '<span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span>',
+                    backButton: false,
+                    viewFunction: function(){ self.layoutView.getRegion("main").show(new LoginView({model: self.user})) }
+                },
+                "home": {
+                    titleHtml: '<span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span>',
+                    backButton: false,
+                    viewFunction: function(){ self.layoutView.getRegion("main").show(new HomeView()); }
+                },
+                "profile": {
+                    titleHtml: 'Profile',
+                    backButton: true,
+                    viewFunction: function(){
+                        self.loadProfile();
+                        self.layoutView.getRegion("main").show(new ProfileView({model: self.user}));
+                    }
+                },
+                "newAdventure": {
+                    titleHtml: 'Create New Adventure',
+                    backButton: true,
+                    viewFunction: function(){
+                        self.layoutView.getRegion("main").show(new NewAdventureView());
+                    }
+                }
             };
+
+            views[view].viewFunction();
+            this.vent.trigger("viewChanged", views[view]);
         },
 
         createUser: function(data){
@@ -126,12 +130,12 @@ $(function(){
         userCreated: function(data){
             this.user.set("username", data.username);
             this.user.set("id", data.id);
-            this.showProfileView();
+            this.vent.trigger("showView", "profile");
         },
 
         adventureCreated: function(data){
             this.adventure.set("name", data.name);
-            this.showInviteToAdventureView();
+            //this.vent.trigger("showView", "inviteToAdventure");
         },
 
         saveProfile: function(){
@@ -186,22 +190,32 @@ $(function(){
     });
 
     var HeaderView = Marionette.ItemView.extend({
+        initialize: function(){
+            this.listenTo(app.vent, "viewChanged", this.viewChanged);
+        },
+
         template: "#template-header",
 
         events: {
-            "click a": "anchorClicked",
-            "click .navbar-toggle": "showMenu"
+            "click .navbar-toggle": "showMenu",
+            "click .navbar-back": "goBack"
         },
 
-        anchorClicked: function(e){
-            e.preventDefault();
-            var $el = $(e.target);
-            app.vent.trigger("showView", $el.data("view"));
+        viewChanged: function(data){
+            this.$el.find(".navbar-brand").html(data.titleHtml);
+
+            this.$el.find(".navbar-toggle").toggle(!data.backButton);
+            this.$el.find(".navbar-back").toggle(data.backButton);
         },
 
         showMenu: function(e){
             e.stopPropagation();
             app.vent.trigger("showMenu");
+        },
+
+        goBack: function(e){
+            e.stopPropagation();
+            app.vent.trigger("showView", "home");
         }
     });
 
@@ -210,12 +224,20 @@ $(function(){
         initialize: function(){
             this.listenTo(app.vent, "showMenu", this.showMenu);
             this.listenTo(app.vent, "hideMenu", this.hideMenu);
+
+            //this.listenTo(app.vent, "viewChanged", this.viewChanged);
         },
 
         template: "#template-menu",
 
         events: {
-            "click": "menuClicked"
+            "click button": "selectMenuOption"
+        },
+
+        selectMenuOption: function(e){
+            e.preventDefault();
+            var $el = $(e.target);
+            app.vent.trigger("showView", $el.data("view"));
         },
 
         menuClicked: function(e){
@@ -229,6 +251,7 @@ $(function(){
         showMenu: function(){
             this.$el.parent().removeClass("collapsed");
         }
+
     });
 
     var LoginView = Marionette.ItemView.extend({
