@@ -50,13 +50,18 @@ $(function(){
             if (userData.username.length == 0){
                 this.vent.trigger("showView", "login");
             } else {
-                this.vent.trigger("showView", "home");
+                //this.vent.trigger("showView", "home");
                 this.loadAdventure();
             }
         },
 
         showView: function(view){
             var self = this;
+
+            //TODO: this seems a little hacky
+            if (view == "home" && self.adventure.get("name").length > 0){
+                view = "adventure";
+            };
 
             var views = {
                 "login": {
@@ -77,12 +82,13 @@ $(function(){
                         self.layoutView.getRegion("main").show(new ProfileView({model: self.user}));
                     }
                 },
-                "newAdventure": {
-                    titleHtml: 'Create New Adventure',
-                    backButton: true,
+                "adventure": {
+                    titleHtml: 'Adventure',
+                    backButton: false,
                     viewFunction: function(){
-                        self.layoutView.getRegion("main").show(new NewAdventureView());
+                        self.layoutView.getRegion("main").show(new AdventureView({model: self.adventure}));
                     }
+                    //TODO: do menu options go here? or maybe the menu's model should be set to self.adventure?
                 }
             };
 
@@ -176,7 +182,14 @@ $(function(){
             $.ajax({
                 url: "/api/load_adventure/",
                 success: function(data){
-                    self.vent.trigger("showView", "adventure");
+                    if (data.name == ""){
+                        self.vent.trigger("showView", "home");
+                        return;
+                    };
+                    self.adventure.set({name: data.name});
+                    //TODO: set users and other data
+
+                    self.vent.trigger("showView", "adventure"); //TODO: this is going to be problematic...maybe this is controlled by a flag?
                 }
             });
         }
@@ -335,12 +348,16 @@ $(function(){
         },
 
         newAdventure: function(){
-            app.vent.trigger("showView", "newAdventure");
+            app.vent.trigger("showView", "adventure");
         }
     });
 
-    var NewAdventureView = Marionette.ItemView.extend({
-        template: "#template-new-adventure-name",
+    var AdventureView = Marionette.ItemView.extend({
+        initialize: function(){
+            this.listenTo(this.model, "change", this.render);
+        },
+
+        template: "#template-adventure",
 
         events: {
             "submit .js-form-adventure-name": "saveAdventureName"
@@ -352,7 +369,7 @@ $(function(){
         }
     });
 
-    var AdventureView = Marionette.ItemView.extend({
+    var xAdventureView = Marionette.ItemView.extend({
         template: "#template-adventure",
 
         events: {

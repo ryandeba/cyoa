@@ -47,8 +47,13 @@
                 margin-left: 0;
             }
 
+            #region-header {
+                box-shadow: #000 0px 2px 5px;
+            }
+
             #region-menu {
                 background-color: #95a5a6;
+                box-shadow: #000 2px 0px 5px;
 
                 height: 100%;
                 width: 200px;
@@ -135,8 +140,8 @@
         </script>
 
         <script type="text/template" id="template-profile">
-            <div class="col-xs-12">
-                <div class="row">
+            <div class="row">
+                <div class="col-xs-12">
                     <form class="js-form-profile">
                         <div class="form-group">
                             <input type="email" class="form-control" id="email" placeholder="Email" data-field="email" value="<%= email %>">
@@ -157,8 +162,8 @@
         </script>
 
         <script type="text/template" id="template-home">
-            <div class="col-xs-12">
-                <div class="row">
+            <div class="row">
+                <div class="col-xs-12">
                     <button type="button" class="btn btn-primary btn-lg btn-block js-btn-new">Start New Adventure</button>
                     <button type="button" class="btn btn-primary btn-lg btn-block js-btn-invite">Invite</button>
                     <button type="button" class="btn btn-primary btn-lg btn-block js-btn-completed">Completed Adventures</button>
@@ -173,30 +178,34 @@
                 2) invite users. show invited users below with their status of joined/declined. "start adventure" button
                 3) adventure screen
         -->
-        <script type="text/template" id="template-new-adventure-name">
+        <script type="text/template" id="template-adventure">
             <div class="col-xs-12">
-                <form class="js-form-adventure-name">
-                    <div class="input-group">
-                        <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
-                        </span>
-                    </div>
-                    <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
-                </form>
+                <% if (name.length == 0){ %>
+                    <form class="js-form-adventure-name">
+                        <div class="input-group">
+                            <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
+                            </span>
+                        </div>
+                        <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
+                    </form>
+                <% } else { %>
+                    <h1><%= name %></h1>
+                <% } %>
             </div>
         </script>
 
-        <script type="text/template" id="template-adventure">
-            <div class="col-xs-12">
-                <div class="row">
+        <script type="text/template" id="template-adventure-x">
+            <div class="row">
+                <div class="col-xs-12">
                     <button class="btn btn-default js-btn-invite">Invite Users</button> <!-- host only -->
                     <div class="js-container-users"></div>
                 </div>
             </div>
 
-            <div class="col-xs-12 js-container-invite" style="display: none;">
-                <div class="row">
+            <div class="row">
+                <div class="col-xs-12 js-container-invite" style="display: none;">
                     <form class="js-form-invite">
                         <div class="input-group">
                             <input type="text" class="form-control js-input-username" placeholder="Enter username" required>
