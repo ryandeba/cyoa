@@ -58,9 +58,8 @@ def create_user(request):
     return False
 
 def create_adventure(request):
-    adventure = Adventure.objects.create(name=request.GET.get("name"))
-    AdventureUser.objects.create(adventure=adventure, is_host=True)
-    AdventureUser.objects.create(adventure=adventure, is_host=True)
+    adventure = Adventure.objects.create(name=request.POST.get("name"))
+    AdventureUser.objects.create(adventure=adventure, user=request.user, is_host=True)
     return True
 
 def save_profile(request):
@@ -79,15 +78,6 @@ def load_profile(request):
         "email": user.email,
     }
 
-def createAdventure(request): #create new adventure, set the user as the host
-    #adventure = Adventure.objects.create()
-    return [
-        {
-            "userID": request.user.id,
-            #"adventureID": adventure.id
-        }
-    ]
-
 def joinAdventure(request): #add request.user to the adventure
     return []
 
@@ -95,31 +85,32 @@ def declineAdventure(request):
     return []
 
 def load_adventure(request): #load adventure data for the adventure that the user is in (if applicable)
+    adventure = Adventure.objects.get(adventureuser__user=request.user)
     return {
-        "name": "adventure name",
-        "users": {},
-        "activities": [
-            { #previously selected activity
-                "name": "activity name",
-                "url": "url",
-                "maps_url": "maps_url",
-                "facebook_url": "facebook_url",
-            },
-            [ #current activity to vote on
-                {
-                    "name": "activity 1",
-                    "votes": 0,
-                },
-                {
-                    "name": "activity 2",
-                    "votes": 1,
-                },
-                {
-                    "name": "activity 3",
-                    "votes": 2,
-                },
-            ],
-        ],
+        "name": adventure.name,
+        "users": [],
+        "activities": [],
+#            { #previously selected activity
+#                "name": "activity name",
+#                "url": "url",
+#                "maps_url": "maps_url",
+#                "facebook_url": "facebook_url",
+#            },
+#            [ #current activity to vote on
+#                {
+#                    "name": "activity 1",
+#                    "votes": 0,
+#                },
+#                {
+#                    "name": "activity 2",
+#                    "votes": 1,
+#                },
+#                {
+#                    "name": "activity 3",
+#                    "votes": 2,
+#                },
+#            ],
+#        ],
     }
     return HttpResponse(json.dumps(responseData), content_type="application/json")
 

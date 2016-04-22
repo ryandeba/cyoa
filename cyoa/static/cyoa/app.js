@@ -3,7 +3,7 @@ $(function(){
     window.app = undefined;
 
     var userData = {
-        username: "{{ username }}"
+        username: "{{ username }}" //TODO: fix this
     };
 
     var User = Backbone.Model.extend({
@@ -51,6 +51,7 @@ $(function(){
                 this.vent.trigger("showView", "login");
             } else {
                 this.vent.trigger("showView", "home");
+                this.loadAdventure();
             }
         },
 
@@ -165,6 +166,17 @@ $(function(){
                     self.user.set("firstName", data.firstName);
                     self.user.set("lastName", data.lastName);
                     self.user.set("email", data.email);
+                }
+            });
+        },
+
+        loadAdventure: function(){
+            var self = this;
+
+            $.ajax({
+                url: "/api/load_adventure/",
+                success: function(data){
+                    self.vent.trigger("showView", "adventure");
                 }
             });
         }
