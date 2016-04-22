@@ -24,7 +24,6 @@
         <script src="/static/cyoa/backbone.marionette.min.js"></script>
         <script src="/static/cyoa/app.js"></script>
 
-
         <style>
             body {
                 margin-top: 80px;
@@ -42,31 +41,59 @@
             .container > .navbar-header {
                 margin-left: 0;
             }
+
+            #region-menu {
+                background-color: #95a5a6;
+
+                height: 100%;
+                width: 200px;
+
+                position: absolute;
+                top: 0;
+                left: 0;
+
+                transition: 0.3s all;
+
+                z-index: 1100;
+            }
+
+            #region-menu.collapsed {
+                left: -200px;
+            }
         </style>
 
+        <script>
+            $(function(){
+            });
+        </script>
+
         <script type="text/template" id="template-application">
-            <nav id="region-nav" class="navbar navbar-default navbar-fixed-top"></nav>
+            <nav id="region-header" class="navbar navbar-default navbar-fixed-top"></nav>
+            <nav id="region-menu" class="collapsed"></nav>
             <div class="container" id="region-main">
             </div>
         </script>
 
-        <script type="text/template" id="template-nav">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#" data-view="home"><span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span></a>
+        <script type="text/template" id="template-header">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-target="#navbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#" data-view="home"><span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span></a>
+                </div>
             </div>
-            <!--
-            <div id="navbar" class="collapse navbar-collapse">
+        </script>
+
+        <script type="text/template" id="template-menu">
+            <div id="navbar" class="container">
                 <ul class="nav navbar-nav">
                     <li><a href="#profile" data-view="profile">Profile</a></li>
                     <li><a href="#invite" data-view="invite">Invite</a></li>
                 </ul>
             </div>
-            -->
         </script>
 
         <script type="text/template" id="template-create-user">

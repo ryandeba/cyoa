@@ -37,7 +37,8 @@ $(function(){
             this.layoutView = new ApplicationLayoutView();
             this.layoutView.render();
 
-            this.layoutView.getRegion("nav").show(new NavView());
+            this.layoutView.getRegion("header").show(new HeaderView());
+            this.layoutView.getRegion("menu").show(new MenuView());
 
             this.listenTo(this.vent, "createUser", this.createUser);
             this.listenTo(this.vent, "userCreated", this.userCreated);
@@ -166,30 +167,67 @@ $(function(){
     });
 
     var ApplicationLayoutView = Marionette.LayoutView.extend({
+        initialize: function(){
+            $(document).on("click", function(){
+                app.vent.trigger("hideMenu");
+            });
+        },
+
         el: "body",
 
         template: "#template-application",
 
         regions: {
-            nav: "#region-nav",
+            header: "#region-header",
+            menu: "#region-menu",
             main: "#region-main"
-        }
-    });
-
-    var NavView = Marionette.ItemView.extend({
-        template: "#template-nav",
-        attributes: {
-            class: "container"
         },
 
+    });
+
+    var HeaderView = Marionette.ItemView.extend({
+        template: "#template-header",
+
         events: {
-            "click a": "anchorClicked"
+            "click a": "anchorClicked",
+            "click .navbar-toggle": "showMenu"
         },
 
         anchorClicked: function(e){
             e.preventDefault();
             var $el = $(e.target);
             app.vent.trigger("showView", $el.data("view"));
+        },
+
+        showMenu: function(e){
+            e.stopPropagation();
+            app.vent.trigger("showMenu");
+        }
+    });
+
+    var MenuView = Marionette.ItemView.extend({
+
+        initialize: function(){
+            this.listenTo(app.vent, "showMenu", this.showMenu);
+            this.listenTo(app.vent, "hideMenu", this.hideMenu);
+        },
+
+        template: "#template-menu",
+
+        events: {
+            "click": "menuClicked"
+        },
+
+        menuClicked: function(e){
+            e.stopPropagation();
+        },
+
+        hideMenu: function(){
+            this.$el.parent().addClass("collapsed");
+        },
+
+        showMenu: function(){
+            this.$el.parent().removeClass("collapsed");
         }
     });
 
