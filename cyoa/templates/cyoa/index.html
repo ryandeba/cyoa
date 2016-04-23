@@ -30,22 +30,42 @@
                 margin-top: 80px;
             }
 
-            .navbar-toggle {
-                display: inline-block;
-                float: none;
+            .adventure-user {
+                background-color: #3498db;
+                border-radius: 100px;
+                box-shadow: #000 -2px 2px 5px;
+                cursor: pointer;
+                float: left;
+                font-size: 20px;
+                line-height: 0;
+                padding: 30px 0;
+                position: relative;
+                text-align: center;
+                width: 60px;
             }
 
-            .navbar-brand {
-                float: none;
-            }
+                .adventure-user-username {
+                    font-size: 10px;
 
-            .navbar-default .navbar-brand:hover {
-                color: #fff;
-            }
+                    bottom: -10px;
+                    left: 50%;
+                    margin-left: -30px;
+                    position: absolute;
+                    width: 60px;
+                }
 
-            .container > .navbar-header {
-                margin-left: 0;
-            }
+                .adventure-user .fa {
+                    line-height: 0;
+                }
+
+                .adventure-user + .adventure-user {
+                    margin-left: 10px;
+                }
+
+                .adventure-user.invite {
+                    background-color: #f39c12;
+                    margin-right: 10px;
+                }
 
             #region-header {
                 box-shadow: #000 0px 2px 5px;
@@ -78,7 +98,25 @@
                 width: 100%;
             }
 
-            .navbar-back {
+            /* bootstrap customizations */
+            .navbar-toggle {
+                display: inline-block;
+                float: none;
+            }
+
+            .navbar-brand {
+                float: none;
+            }
+
+            .navbar-default .navbar-brand:hover {
+                color: #fff;
+            }
+
+            .container > .navbar-header {
+                margin-left: 0;
+            }
+
+           .navbar-back {
                 position: relative;
                 margin-right: 15px;
                 padding: 5px 10px;
@@ -179,31 +217,36 @@
                 3) adventure screen
         -->
         <script type="text/template" id="template-adventure">
-            <div class="col-xs-12">
-                <% if (name.length == 0){ %>
-                    <form class="js-form-adventure-name">
-                        <div class="input-group">
-                            <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
-                            <span class="input-group-btn">
-                                <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
-                            </span>
-                        </div>
-                        <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
-                    </form>
-                <% } else { %>
-                    <h1><%= name %></h1>
-                <% } %>
+            <div class="row">
+                <div class="col-xs-12">
+                    <% if (name.length == 0){ %>
+                        <form class="js-form-adventure-name">
+                            <div class="input-group">
+                                <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
+                                <span class="input-group-btn">
+                                    <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
+                                </span>
+                            </div>
+                            <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
+                        </form>
+                    <% } else { %>
+                        <h1><%= name %></h1>
+
+
+                    <% } %>
+                </div>
+            </div>
+
+            <div>
+                <div class="adventure-user invite">
+                    <i class="fa fa-plus"></i>
+                    <span class="adventure-user-username">Invite</span>
+                </div>
+                <div id="region-adventure-users">users!</div>
             </div>
         </script>
 
         <script type="text/template" id="template-adventure-x">
-            <div class="row">
-                <div class="col-xs-12">
-                    <button class="btn btn-default js-btn-invite">Invite Users</button> <!-- host only -->
-                    <div class="js-container-users"></div>
-                </div>
-            </div>
-
             <div class="row">
                 <div class="col-xs-12 js-container-invite" style="display: none;">
                     <form class="js-form-invite">
@@ -214,14 +257,17 @@
                             </span>
                         </div>
                         <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
-                        <button type="button" class="btn btn-danger js-btn-invite">Cancel</button>
+                        <button type="button" class="btn btn-danger">Cancel</button>
                     </form>
                 </div>
             </div>
         </script>
 
         <script type="text/template" id="template-adventure-user">
-            <button class="btn btn-default js-btn-user">Invite Users</button>
+            <i class="fa fa-user"></i>
+            <span class="adventure-user-username">
+                <%= username %>
+            </span>
         </script>
 
     </head>

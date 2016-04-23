@@ -3,27 +3,34 @@ $(function(){
     window.app = undefined;
 
     var userData = {
-        username: "{{ username }}" //TODO: fix this
+        username: "{{ username }}" //TODO: fix this. see "ryandeba" hack below
     };
 
     var User = Backbone.Model.extend({
         defaults: {
-            "id": undefined,
             "username": "ryandeba",
             "email": "",
             "firstName": "",
             "lastName": "",
             "gender": ""
-        }
+        },
+
+        idAttribute: "username"
+    });
+
+    var AdventureUsers = Backbone.Collection.extend({
+        model: User
     });
 
     var Adventure = Backbone.Model.extend({
         defaults: {
             id: "",
-            name: ""
+            name: "",
+            users: []
         },
 
         initialize: function(){
+            this.set("users", new AdventureUsers());
         }
     });
 
@@ -142,7 +149,6 @@ $(function(){
 
         adventureCreated: function(data){
             this.adventure.set("name", data.name);
-            //this.vent.trigger("showView", "inviteToAdventure");
         },
 
         saveProfile: function(){
@@ -187,6 +193,9 @@ $(function(){
                         return;
                     };
                     self.adventure.set({name: data.name});
+
+                    self.adventure.get("users").set(data.users); //TODO: django is passing this as a string and backbone seems to be handling it, but...can it be passed down as an array instead?
+                    console.log(self.adventure.get("users"));
                     //TODO: set users and other data
 
                     self.vent.trigger("showView", "adventure"); //TODO: this is going to be problematic...maybe this is controlled by a flag?
@@ -352,12 +361,22 @@ $(function(){
         }
     });
 
-    var AdventureView = Marionette.ItemView.extend({
+    var AdventureView = Marionette.LayoutView.extend({
         initialize: function(){
+            var self = this;
+
             this.listenTo(this.model, "change", this.render);
+
+            setTimeout(function(){ //TODO: is there a better way to do this?
+                self.getRegion("users").show(new AdventureUsersView({collection: app.adventure.get("users")}));
+            }, 0);
         },
 
         template: "#template-adventure",
+
+        regions: {
+            users: "#region-adventure-users",
+        },
 
         events: {
             "submit .js-form-adventure-name": "saveAdventureName"
@@ -369,7 +388,20 @@ $(function(){
         }
     });
 
-    var xAdventureView = Marionette.ItemView.extend({
+    var AdventureUserView = Marionette.ItemView.extend({
+        template: "#template-adventure-user",
+
+        attributes: {
+            "class": "adventure-user"
+        }
+    });
+
+    var AdventureUsersView = Marionette.CollectionView.extend({
+        childView:  AdventureUserView
+    });
+
+/*
+    var AdventureView = Marionette.ItemView.extend({
         template: "#template-adventure",
 
         events: {
@@ -385,6 +417,7 @@ $(function(){
             //if the user is the host, then show options to remove user
         }
     });
+*/
 
     new App();
 });

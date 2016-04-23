@@ -1,5 +1,6 @@
 import sys
- 
+
+from django.core import serializers
 from django.shortcuts import render
 from django.http import HttpResponse
 
@@ -85,17 +86,11 @@ def declineAdventure(request):
     return []
 
 def load_adventure(request): #load adventure data for the adventure that the user is in (if applicable)
+    adventure = Adventure.objects.get(adventureuser__user=request.user)
     adventure_data = {
-        "name": "",
-        "users": [],
+        "name": adventure.name,
+        "users": serializers.serialize("json", adventure.adventureuser_set.all()),
         "activities": [],
-    }
-    try: 
-        adventure = Adventure.objects.get(adventureuser__user=request.user)
-        adventure_data = {
-            "name": adventure.name,
-            "users": [],
-            "activities": [],
 #            { #previously selected activity
 #                "name": "activity name",
 #                "url": "url",
@@ -117,9 +112,7 @@ def load_adventure(request): #load adventure data for the adventure that the use
 #                },
 #            ],
 #        ],
-        }
-    except:
-        pass
+    }
     return adventure_data
 
 def startNextActivity(request): #(HOST) pass the location and activity type selections, create activityAdventures

@@ -74,6 +74,7 @@ class AdventureUser(models.Model):
     adventure = models.ForeignKey(Adventure, on_delete=models.CASCADE)
     user = models.ForeignKey(User)
     is_host = models.BooleanField(default=False)
+    has_accepted = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
 
 class AdventureActivity(models.Model):
