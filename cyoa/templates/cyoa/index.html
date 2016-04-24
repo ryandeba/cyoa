@@ -30,6 +30,16 @@
                 margin-top: 80px;
             }
 
+            .container-adventure-users {
+                background-color: #eee;
+
+                margin: 0 -10px;
+                padding: 10px;
+
+                height: 100px;
+                width: calc(100% + 25px);
+            }
+
             .adventure-user {
                 background-color: #3498db;
                 border-radius: 100px;
@@ -47,10 +57,11 @@
                 .adventure-user-username {
                     font-size: 10px;
 
-                    bottom: -10px;
+                    bottom: -15px;
                     left: 50%;
-                    margin-left: -30px;
                     position: absolute;
+
+                    margin-left: -30px;
                     width: 60px;
                 }
 
@@ -65,7 +76,20 @@
                 .adventure-user.invite {
                     background-color: #f39c12;
                     margin-right: 10px;
+
+                    transition: 0.3s all;
                 }
+                .adventure-user.invite.cancel {
+                    background-color: #e74c3c;
+                }
+                    .adventure-user.invite .fa {
+                        transform: rotate(0deg);
+
+                        transition: 0.3s all;
+                    }
+                    .adventure-user.invite.cancel .fa {
+                        transform: rotate(45deg);
+                    }
 
             #region-header {
                 box-shadow: #000 0px 2px 5px;
@@ -163,15 +187,28 @@
             <button type="button" class="btn btn-default" data-view="invite">Invite</button>
         </script>
 
-        <script type="text/template" id="template-create-user">
+        <script type="text/template" id="template-login">
             <div class="col-xs-12">
+                Login
+                <form class="js-form-login">
+                    <input type="text" class="form-control js-input-username" placeholder="Username" required>
+                    <input type="password" class="form-control js-input-password" placeholder="Password" required>
+                    <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Login!">Login!</button>
+                    <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
+                </form>
+
+                <br>
+                <button class="btn btn-primary" type="button">Create new account</button>
+            </div>
+        </script>
+
+        <script type="text/template" id="template-create-account">
+            <div class="col-xs-12">
+                Create Account
                 <form class="js-form-create-user">
-                    <div class="input-group">
-                        <input type="text" class="form-control js-input-username" placeholder="Enter username" required>
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
-                        </span>
-                    </div>
+                    <input type="text" class="form-control js-input-username" placeholder="Username" required>
+                    <input type="password" class="form-control js-input-password" placeholder="Password" required>
+                    <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
                     <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
                 </form>
             </div>
@@ -181,6 +218,9 @@
             <div class="row">
                 <div class="col-xs-12">
                     <form class="js-form-profile">
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="email" placeholder="Email" data-field="email" value="<%= username %>" disabled>
+                        </div>
                         <div class="form-group">
                             <input type="email" class="form-control" id="email" placeholder="Email" data-field="email" value="<%= email %>">
                         </div>
@@ -230,37 +270,23 @@
                             <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
                         </form>
                     <% } else { %>
-                        <h1><%= name %></h1>
-
-
                     <% } %>
                 </div>
             </div>
 
-            <div>
-                <div class="adventure-user invite">
+            <div class="container-adventure-users">
+                <div class="adventure-user invite js-btn-invite">
                     <i class="fa fa-plus"></i>
-                    <span class="adventure-user-username">Invite</span>
+                    <span class="adventure-user-username js-label-invite">Invite</span>
                 </div>
-                <div id="region-adventure-users">users!</div>
+                <div id="region-adventure-users"></div>
             </div>
         </script>
 
-        <script type="text/template" id="template-adventure-x">
-            <div class="row">
-                <div class="col-xs-12 js-container-invite" style="display: none;">
-                    <form class="js-form-invite">
-                        <div class="input-group">
-                            <input type="text" class="form-control js-input-username" placeholder="Enter username" required>
-                            <span class="input-group-btn">
-                                <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
-                            </span>
-                        </div>
-                        <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
-                        <button type="button" class="btn btn-danger">Cancel</button>
-                    </form>
-                </div>
-            </div>
+        <script type="text/template" id="template-adventure-invite">
+            <form>
+                <input type="text" class="form-control js-input-username" placeholder="Enter username" required>
+            </form>
         </script>
 
         <script type="text/template" id="template-adventure-user">

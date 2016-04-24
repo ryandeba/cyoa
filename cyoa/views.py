@@ -22,11 +22,13 @@ def index(request):
 def api(request, method):
     methods = {
         "is_logged_in": is_logged_in,
+        "login": login_user,
         "create_user": create_user,
         "save_profile": save_profile,
         "load_profile": load_profile,
         "create_adventure": create_adventure,
         "load_adventure": load_adventure,
+        "invite_user": invite_user,
     }
 #    if request.method == "POST":
 #        request.user = AppUser.objects.get(id=request.POST.get("id")).user
@@ -35,6 +37,17 @@ def api(request, method):
 
 def is_logged_in(request):
     return request.user.is_authenticated()
+
+def login_user(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        login(request, user)
+        AppUser.objects.get_or_create(user=user)
+        return True
+    return False
 
 def create_user(request):
     try:
@@ -86,34 +99,22 @@ def declineAdventure(request):
     return []
 
 def load_adventure(request): #load adventure data for the adventure that the user is in (if applicable)
-    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    try:
+        adventure = Adventure.objects.get(adventureuser__user=request.user)
+    except:
+        return {}
     adventure_data = {
         "name": adventure.name,
         "users": serializers.serialize("json", adventure.adventureuser_set.all()),
         "activities": [],
-#            { #previously selected activity
-#                "name": "activity name",
-#                "url": "url",
-#                "maps_url": "maps_url",
-#                "facebook_url": "facebook_url",
-#            },
-#            [ #current activity to vote on
-#                {
-#                    "name": "activity 1",
-#                    "votes": 0,
-#                },
-#                {
-#                    "name": "activity 2",
-#                    "votes": 1,
-#                },
-#                {
-#                    "name": "activity 3",
-#                    "votes": 2,
-#                },
-#            ],
-#        ],
     }
     return adventure_data
+
+def invite_user(request): #load adventure data for the adventure that the user is in (if applicable)
+    appUser = AppUser.objects.get(user__username=request.GET.get("username"))
+#    adventure = Adventuer.objects.get(kj
+#    adventureUser, created = AdventureUser.objects.get_or_create(adventure=adventure, user=.user)
+    return appUser.user.username
 
 def startNextActivity(request): #(HOST) pass the location and activity type selections, create activityAdventures
     return []

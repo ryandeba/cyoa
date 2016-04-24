@@ -47,6 +47,8 @@ $(function(){
             this.layoutView.getRegion("header").show(new HeaderView());
             this.layoutView.getRegion("menu").show(new MenuView());
 
+            this.listenTo(this.vent, "login", this.login);
+            this.listenTo(this.vent, "login:success", this.loginSuccess);
             this.listenTo(this.vent, "createUser", this.createUser);
             this.listenTo(this.vent, "userCreated", this.userCreated);
             this.listenTo(this.vent, "createAdventure", this.createAdventure);
@@ -54,18 +56,28 @@ $(function(){
             this.listenTo(this.vent, "saveProfile", this.saveProfile);
             this.listenTo(this.vent, "showView", this.showView);
 
+            if (
+                localStorage.getItem("username") == null
+                || localStorage.getItem("password") == null
+            ){
+                this.vent.trigger("showView", "login");
+            } else {
+                this.login({username: localStorage.getItem("username"), password: localStorage.getItem("password")});
+            };
+
+/*
             if (userData.username.length == 0){
                 this.vent.trigger("showView", "login");
             } else {
                 //this.vent.trigger("showView", "home");
                 this.loadAdventure();
             }
+*/
         },
 
         showView: function(view){
             var self = this;
 
-            //TODO: this seems a little hacky
             if (view == "home" && self.adventure.get("name").length > 0){
                 view = "adventure";
             };
@@ -90,7 +102,7 @@ $(function(){
                     }
                 },
                 "adventure": {
-                    titleHtml: 'Adventure',
+                    titleHtml: self.adventure.get("name"),
                     backButton: false,
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AdventureView({model: self.adventure}));
@@ -101,6 +113,51 @@ $(function(){
 
             views[view].viewFunction();
             this.vent.trigger("viewChanged", views[view]);
+        },
+
+/*
+        isLoggedIn: function(){
+            var self = this;
+
+            var result = false;
+
+            $.ajax({
+                url: "/api/is_logged_in/",
+                type: "POST",
+                success: function(response){
+                    result = response;
+                }
+            });
+
+            return result;
+        },
+*/
+
+        login: function(data){
+            var self = this;
+
+            $.ajax({
+                url: "/api/login/",
+                type: "POST",
+                data: {
+                    username: data.username,
+                    password: data.password
+                },
+                success: function(response){
+                    if (response){
+                        self.vent.trigger("login:success", data);
+                    } else {
+                        self.vent.trigger("login:failed");
+                    };
+                }
+            });
+        },
+
+        loginSuccess: function(data){
+            localStorage.setItem("username", data.username);
+            localStorage.setItem("password", data.password);
+
+            this.loadAdventure();
         },
 
         createUser: function(data){
@@ -188,7 +245,7 @@ $(function(){
             $.ajax({
                 url: "/api/load_adventure/",
                 success: function(data){
-                    if (data.name == ""){
+                    if (JSON.stringify(data) == "{}"){
                         self.vent.trigger("showView", "home");
                         return;
                     };
@@ -289,30 +346,35 @@ $(function(){
     });
 
     var LoginView = Marionette.ItemView.extend({
-        template: "#template-create-user",
+        template: "#template-login",
 
         attributes: {
             class: "row"
         },
 
         events: {
-            "submit .js-form-create-user": "createUser"
+            "submit .js-form-login": "login"
         },
 
         initialize: function(){
-            this.listenTo(app.vent, "userCreatedFailed", this.showError);
+            //this.listenTo(app.vent, "userCreatedFailed", this.showError);
         },
 
-        createUser: function(e){
+        login: function(e){
             e.preventDefault();
 
-            this.$el.find(".js-input-username").prop("disabled", true);
-            this.$el.find(".js-btn-submit").prop("disabled", true).html("<i class='fa fa-spinner fa-spin'></i>");
+            var $username = this.$el.find(".js-input-username");
+            var $password = this.$el.find(".js-input-password");
 
-            app.vent.trigger("createUser", {username: this.$el.find(".js-input-username").val()});
+            $username.prop("disabled", true);
+            $password.prop("disabled", true);
+            //this.$el.find(".js-btn-submit").prop("disabled", true).html("<i class='fa fa-spinner fa-spin'></i>");
+
+            app.vent.trigger("login", {username: $username.val(), password: $password.val()});
         },
 
         showError: function(data){
+            /*
             var $username = this.$el.find(".js-input-username");
             var $submit = this.$el.find(".js-btn-submit");
 
@@ -323,6 +385,7 @@ $(function(){
 
             this.$el.find("form").addClass("has-error");
             this.$el.find(".js-container-error-message").show().html("An error occurred");
+            */
         }
     });
 
@@ -366,6 +429,8 @@ $(function(){
             var self = this;
 
             this.listenTo(this.model, "change", this.render);
+            this.listenTo(app.vent, "adventureInviteView:input_not_empty", this.enableInviteUser);
+            this.listenTo(app.vent, "adventureInviteView:input_empty", this.disableInviteUser);
 
             setTimeout(function(){ //TODO: is there a better way to do this?
                 self.getRegion("users").show(new AdventureUsersView({collection: app.adventure.get("users")}));
@@ -379,12 +444,38 @@ $(function(){
         },
 
         events: {
-            "submit .js-form-adventure-name": "saveAdventureName"
+            "submit .js-form-adventure-name": "saveAdventureName",
+            "click .js-btn-invite": "showInviteForm"
         },
 
         saveAdventureName: function(e){
             e.preventDefault();
             app.vent.trigger("createAdventure", {name: this.$el.find(".js-input-adventure-name").val()});
+        },
+
+        showInviteForm: function(e){
+            var $el = $(e.target);
+            if ($el.hasClass("cancel")){
+                this.hideInviteForm();
+            } else {
+                this.getRegion("users").show(new AdventureUserInviteView());
+                this.disableInviteUser();
+            };
+        },
+
+        hideInviteForm: function(){
+            this.getRegion("users").show(new AdventureUsersView({collection: app.adventure.get("users")}));
+            this.enableInviteUser();
+        },
+
+        enableInviteUser: function(){
+            this.$el.find(".js-btn-invite").removeClass("cancel");
+            this.$el.find(".js-label-invite").html("Invite");
+        },
+
+        disableInviteUser: function(){
+            this.$el.find(".js-btn-invite").addClass("cancel");
+            this.$el.find(".js-label-invite").html("Cancel");
         }
     });
 
@@ -398,6 +489,37 @@ $(function(){
 
     var AdventureUsersView = Marionette.CollectionView.extend({
         childView:  AdventureUserView
+    });
+
+    var AdventureUserInviteView = Marionette.ItemView.extend({
+        template: "#template-adventure-invite",
+
+        attributes: {
+            "style": "float: left; margin-top: 12px; width: calc(100% - 80px);"
+        },
+
+        events: {
+            //"submit .js-form-create-user": "inviteUser",
+            "input input": "inputChanged"
+        },
+
+        inviteUser: function(e){
+            e.preventDefault();
+
+            this.$el.find(".js-input-username").prop("disabled", true);
+            //this.$el.find(".js-btn-submit").prop("disabled", true).html("<i class='fa fa-spinner fa-spin'></i>");
+
+            app.vent.trigger("inviteUser", {username: this.$el.find(".js-input-username").val()});
+        },
+
+        inputChanged: function(e){
+            var $el = $(e.target);
+            if ($el.val().length > 0){
+                app.vent.trigger("adventureInviteView:input_not_empty");
+            } else {
+                app.vent.trigger("adventureInviteView:input_empty");
+            }
+        }
     });
 
 /*
