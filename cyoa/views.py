@@ -10,7 +10,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 
-from models import AppUser, Adventure, AdventureUser, Activity, AdventureActivity
+from models import AppUser, Adventure, AdventureUser, Activity, AdventureActivity, AdventureActivityVote
 
 def index(request):
     requestData = {
@@ -30,6 +30,7 @@ def api(request, method):
         "load_adventure": load_adventure,
         "invite_user": invite_user,
         "start_next_activity": start_next_activity,
+        "vote_activity": vote_activity,
     }
 #    if request.method == "POST":
 #        request.user = AppUser.objects.get(id=request.POST.get("id")).user
@@ -93,28 +94,29 @@ def load_profile(request):
         "email": user.email,
     }
 
-def accept_adventure(request): #add request.user to the adventure
-    return []
+def accept_adventure(request):
+    return False
 
 def decline_adventure(request):
-    return []
+    return False
 
-def load_adventure(request): #load adventure data for the adventure that the user is in (if applicable)
+def load_adventure(request):
     try:
         adventure = Adventure.objects.get(adventureuser__user=request.user)
     except:
         return {}
     adventure_data = {
         "name": adventure.name,
+        "host": adventure.adventureuser_set.get(is_host=True).user.username,
         "users": [
             {
                 "username": adventureUser.user.username
-            }
-            for adventureUser in adventure.adventureuser_set.all()
+            } for adventureUser in adventure.adventureuser_set.all()
         ],
         "activities": [
             {
-                #"activityTypeID": adventureActivity.activity.activityType.id,
+                "id": adventureActivity.id,
+                "activityTypeKey": adventureActivity.activity.activityType.key,
                 "name": adventureActivity.activity.name,
                 "url": "",
                 "mapsUrl": "",
@@ -125,8 +127,7 @@ def load_adventure(request): #load adventure data for the adventure that the use
                 "votes": [
                     adventureActivityVote.user.username for adventureActivityVote in adventureActivity.adventureactivityvote_set.all()
                 ]
-            }
-            for adventureActivity in adventure.adventureactivity_set.all()
+            } for adventureActivity in adventure.adventureactivity_set.all()
         ],
     }
     return adventure_data
@@ -144,6 +145,12 @@ def start_next_activity(request):
     for activity in Activity.objects.order_by('?')[:3]:
         AdventureActivity.objects.create(adventure=adventure, activity=activity, group=1)
 
+    return True
+
+def vote_activity(request):
+    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    adventureActivity =  adventure.adventureactivity_set.get(id=request.POST.get("id"))
+    AdventureActivityVote.objects.get_or_create(adventureActivity=adventureActivity, user=request.user)
     return True
 
 def voteActivity(request):

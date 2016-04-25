@@ -32,11 +32,25 @@ $(function(){
         },
 
         initialize: function(){
+        },
+
+        hasWonPreviousVoteRound: function(){
+            return this.get("isChosen") && this.get("group") < this.collection.getCurrentVoteRound();
+        },
+
+        isInCurrentVoteRound: function(){
+            return this.get("group") == this.collection.getCurrentVoteRound();
         }
     });
 
     var Activities = Backbone.Collection.extend({
-        model: Activity
+        model: Activity,
+
+        getCurrentVoteRound: function(){
+            return this.max(function(model){
+                return model.get("group");
+            }).get("group");
+        }
     });
 
     var Adventure = Backbone.Model.extend({
@@ -73,6 +87,7 @@ $(function(){
             this.listenTo(this.vent, "adventureCreated", this.adventureCreated);
             this.listenTo(this.vent, "inviteUser", this.inviteUser);
             this.listenTo(this.vent, "startNextActivity", this.startNextActivity);
+            this.listenTo(this.vent, "submitVote", this.submitVote);
 
             this.listenTo(this.vent, "saveProfile", this.saveProfile);
 
@@ -269,6 +284,19 @@ $(function(){
             });
         },
 
+        submitVote: function(data){
+            $.ajax({
+                url: "/api/vote_activity/",
+                type: "POST",
+                data: {
+                    id: data.id
+                },
+                success: function(response){
+                    console.log(response);
+                }
+            });
+        },
+ 
         saveProfile: function(){
             var self = this;
 
@@ -311,11 +339,12 @@ $(function(){
                         return;
                     };
                     self.adventure.set({name: data.name});
+                    self.adventure.set({host: data.host});
 
                     self.adventure.get("users").set(data.users);
                     self.adventure.get("activities").set(data.activities);
 
-                    self.vent.trigger("showView", "adventure"); //TODO: this is going to be problematic...maybe this is controlled by a flag?
+                    self.vent.trigger("showView", "adventure");
                 }
             });
         }
@@ -494,8 +523,13 @@ $(function(){
 
             setTimeout(function(){ //TODO: is there a better way to do this?
                 self.getRegion("users").show(new AdventureUsersView({collection: self.model.get("users")}));
-                self.getRegion("activities").show(new ActivitiesView({collection: self.model.get("activities")}));
-                self.getRegion("details").show(new NewActivityChoicesView());
+                self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
+                //self.getRegion("host").show(new NewActivityChoicesView());
+
+                if (self.model.get("host") != localStorage.getItem("username")){
+                    self.$el.find(".js-btn-invite").hide();
+                };
+
             }, 0);
         },
 
@@ -504,7 +538,7 @@ $(function(){
         regions: {
             users: "#region-adventure-users",
             activities: "#region-adventure-activities",
-            details: "#region-adventure-details"
+            host: "#region-adventure-host"
         },
 
         events: {
@@ -585,16 +619,57 @@ $(function(){
         }
     });
 
-    var ActivityView = Marionette.ItemView.extend({
-        template: "#template-adventure-activity",
-
-        attributes: {
-            "class": "adventure-activity"
+    var ActivityHistoryView = Marionette.ItemView.extend({
+        onBeforeRender: function(){
+            if (this.model.hasWonPreviousVoteRound()){
+                this.template = "#template-adventure-activity";
+            } else {
+                this.template = "#template-adventure-activity-noop";
+            };
         }
     });
 
-    var ActivitiesView = Marionette.CollectionView.extend({
-        childView: ActivityView
+    var ActivitiesHistoryView = Marionette.CollectionView.extend({
+        childView: ActivityHistoryView
+    });
+
+    var ActivityVoteView = Marionette.ItemView.extend({
+        onBeforeRender: function(){
+            if (this.model.isInCurrentVoteRound()){
+                this.template = "#template-adventure-activity-vote";
+            };
+        },
+
+        events: {
+            "click": "vote"
+        },
+
+        vote: function(){
+            app.vent.trigger("submitVote", {id: this.model.get("id")});
+        }
+    });
+
+    var ActivitiesVoteView = Marionette.CompositeView.extend({
+        template: "#template-adventure-activities-vote",
+        childView: ActivityVoteView,
+        childViewContainer: ".js-activities"
+    });
+
+    var ActivitiesLayoutView = Marionette.LayoutView.extend({
+        template: "#template-adventure-activity-layout",
+
+        regions: {
+            history: "#region-activity-history",
+            vote: "#region-activity-vote"
+        },
+
+        initialize: function(){
+            var self = this;
+            setTimeout(function(){
+                self.getRegion("history").show(new ActivitiesHistoryView({collection: self.collection}));
+                self.getRegion("vote").show(new ActivitiesVoteView({collection: self.collection}));
+            }, 0);
+        }
     });
 
     var NewActivityChoicesView = Marionette.ItemView.extend({

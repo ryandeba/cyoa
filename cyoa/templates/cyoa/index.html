@@ -99,9 +99,8 @@
                     background-color: #18bc9c;
                     border-radius: 100px;
                     box-shadow: #000 -2px 2px 5px;
-                    cursor: pointer;
                     float: left;
-                    font-size: 20px;
+                    font-size: 16px;
                     line-height: 0;
                     padding: 20px 0;
                     position: relative;
@@ -113,8 +112,11 @@
                     }
 
                 .adventure-activity-name {
+                    font-size:  10px;
+
                     float: left;
-                    padding-top: 10px;
+
+                    padding-top: 15px;
                     padding-left: 6px;
                 }
 
@@ -270,7 +272,6 @@
             <div class="row">
                 <div class="col-xs-12">
                     <button type="button" class="btn btn-primary btn-lg btn-block js-btn-new">Start New Adventure</button>
-                    <button type="button" class="btn btn-primary btn-lg btn-block js-btn-invite">Invite</button>
                     <button type="button" class="btn btn-primary btn-lg btn-block js-btn-completed">Completed Adventures</button>
                     <button type="button" class="btn btn-primary btn-lg btn-block js-btn-achievements">Achievements</button>
                 </div>
@@ -310,7 +311,7 @@
             </div>
 
             <div id="region-adventure-activities"></div>
-            <div id="region-adventure-details"></div>
+            <div id="region-adventure-host"></div>
         </script>
 
         <script type="text/template" id="template-adventure-invite">
@@ -326,11 +327,37 @@
             </span>
         </script>
 
+
+        <script type="text/template" id="template-adventure-activity-layout">
+            <div id="region-activity-history"></div>
+            <div id="region-activity-vote"></div>
+        </script>
+
         <script type="text/template" id="template-adventure-activity">
-            <div class="adventure-activity-icon">
-                <i class="fa fa-beer"></i>
+            <div class="adventure-activity">
+                <div class="adventure-activity-icon">
+                    <i class="fa fa-beer"></i>
+                </div>
+                <div class="adventure-activity-name"><%= name %></div>
             </div>
-            <div class="adventure-activity-name"><%= name %></div>
+        </script>
+
+        <script type="text/template" id="template-adventure-activity-vote">
+            <div class="adventure-activity">
+                <div class="adventure-activity-icon">
+                    <i class="fa fa-beer"></i>
+                </div>
+                <div class="adventure-activity-name"><%= name %></div>
+            </div>
+        </script>
+
+        <script type="text/template" id="template-adventure-activity-noop">
+        </script>
+
+        <script type="text/template" id="template-adventure-activities-vote">
+            <strong>Time to vote!</strong>
+            <small>Tap one of the activities below to cast your vote</small>
+            <div class="js-activities"></div>
         </script>
 
         <script type="text/template" id="template-new-activity-choices">
