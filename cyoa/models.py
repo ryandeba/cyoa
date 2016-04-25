@@ -17,6 +17,9 @@ class AppUser(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, null=True)
 
+    def __str__(self):
+        return self.user.username
+
 class Location(models.Model):
     name = models.CharField(max_length=100)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -26,6 +29,7 @@ class Location(models.Model):
 
 class ActivityType(models.Model):
     name = models.CharField(max_length=100)
+    key = models.CharField(max_length=100)
     date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -80,9 +84,11 @@ class AdventureUser(models.Model):
 class AdventureActivity(models.Model):
     adventure = models.ForeignKey(Adventure, on_delete=models.CASCADE)
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    group = models.IntegerField()
+    is_chosen = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
 
 class AdventureActivityVote(models.Model):
     adventureActivity = models.ForeignKey(AdventureActivity, on_delete=models.CASCADE)
-    adventureUser = models.ForeignKey(AdventureUser)
+    user = models.ForeignKey(User)
     date_created = models.DateTimeField(auto_now_add=True)

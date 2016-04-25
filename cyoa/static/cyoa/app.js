@@ -2,13 +2,9 @@ $(function(){
 
     window.app = undefined;
 
-    var userData = {
-        username: "{{ username }}" //TODO: fix this. see "ryandeba" hack below
-    };
-
     var User = Backbone.Model.extend({
         defaults: {
-            "username": "ryandeba",
+            "username": "",
             "email": "",
             "firstName": "",
             "lastName": "",
@@ -22,15 +18,35 @@ $(function(){
         model: User
     });
 
+    var Activity = Backbone.Model.extend({
+        defaults: {
+            activityTypeKey: "",
+            name: "",
+            url: "",
+            mapsUrl: "",
+            facebookUrl: "",
+
+            group: 0,
+            isChosen: false,
+            votes: [] //array of usernames
+        },
+
+        initialize: function(){
+        }
+    });
+
+    var Activities = Backbone.Collection.extend({
+        model: Activity
+    });
+
     var Adventure = Backbone.Model.extend({
         defaults: {
-            id: "",
-            name: "",
-            users: []
+            name: ""
         },
 
         initialize: function(){
             this.set("users", new AdventureUsers());
+            this.set("activities", new Activities());
         }
     });
 
@@ -49,11 +65,17 @@ $(function(){
 
             this.listenTo(this.vent, "login", this.login);
             this.listenTo(this.vent, "login:success", this.loginSuccess);
+
             this.listenTo(this.vent, "createUser", this.createUser);
             this.listenTo(this.vent, "userCreated", this.userCreated);
+
             this.listenTo(this.vent, "createAdventure", this.createAdventure);
             this.listenTo(this.vent, "adventureCreated", this.adventureCreated);
+            this.listenTo(this.vent, "inviteUser", this.inviteUser);
+            this.listenTo(this.vent, "startNextActivity", this.startNextActivity);
+
             this.listenTo(this.vent, "saveProfile", this.saveProfile);
+
             this.listenTo(this.vent, "showView", this.showView);
 
             if (
@@ -84,12 +106,12 @@ $(function(){
 
             var views = {
                 "login": {
-                    titleHtml: '<span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span>',
+                    titleHtml: '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>',
                     backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoginView({model: self.user})) }
                 },
                 "home": {
-                    titleHtml: '<span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span>',
+                    titleHtml: '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>',
                     backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new HomeView()); }
                 },
@@ -188,8 +210,8 @@ $(function(){
                 data: {
                     name: data.name
                 },
-                success: function(data){
-                    if (data){
+                success: function(response){
+                    if (response){
                         self.vent.trigger("adventureCreated", data);
                     } else {
                         //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
@@ -206,6 +228,45 @@ $(function(){
 
         adventureCreated: function(data){
             this.adventure.set("name", data.name);
+        },
+
+        inviteUser: function(data){
+           var self = this;
+
+            $.ajax({
+                url: "/api/invite_user/",
+                type: "POST",
+                data: {
+                    username: data.username
+                },
+                success: function(response){
+                    if (response){
+                        self.vent.trigger("invite:success", {username: data.username});
+                    } else {
+                        //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
+                    };
+                }
+            });
+        },
+
+        startNextActivity: function(data){
+            $.ajax({
+                url: "/api/start_next_activity/",
+                type: "POST",
+                data: {
+                    //TODO
+                },
+                success: function(response){
+                    console.log(response);
+                    /*
+                    if (response){
+                        self.vent.trigger("invite:success", {username: data.username});
+                    } else {
+                        //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
+                    };
+                    */
+                }
+            });
         },
 
         saveProfile: function(){
@@ -251,9 +312,8 @@ $(function(){
                     };
                     self.adventure.set({name: data.name});
 
-                    self.adventure.get("users").set(data.users); //TODO: django is passing this as a string and backbone seems to be handling it, but...can it be passed down as an array instead?
-                    console.log(self.adventure.get("users"));
-                    //TODO: set users and other data
+                    self.adventure.get("users").set(data.users);
+                    self.adventure.get("activities").set(data.activities);
 
                     self.vent.trigger("showView", "adventure"); //TODO: this is going to be problematic...maybe this is controlled by a flag?
                 }
@@ -433,7 +493,9 @@ $(function(){
             this.listenTo(app.vent, "adventureInviteView:input_empty", this.disableInviteUser);
 
             setTimeout(function(){ //TODO: is there a better way to do this?
-                self.getRegion("users").show(new AdventureUsersView({collection: app.adventure.get("users")}));
+                self.getRegion("users").show(new AdventureUsersView({collection: self.model.get("users")}));
+                self.getRegion("activities").show(new ActivitiesView({collection: self.model.get("activities")}));
+                self.getRegion("details").show(new NewActivityChoicesView());
             }, 0);
         },
 
@@ -441,6 +503,8 @@ $(function(){
 
         regions: {
             users: "#region-adventure-users",
+            activities: "#region-adventure-activities",
+            details: "#region-adventure-details"
         },
 
         events: {
@@ -499,7 +563,7 @@ $(function(){
         },
 
         events: {
-            //"submit .js-form-create-user": "inviteUser",
+            "submit form": "inviteUser",
             "input input": "inputChanged"
         },
 
@@ -507,7 +571,6 @@ $(function(){
             e.preventDefault();
 
             this.$el.find(".js-input-username").prop("disabled", true);
-            //this.$el.find(".js-btn-submit").prop("disabled", true).html("<i class='fa fa-spinner fa-spin'></i>");
 
             app.vent.trigger("inviteUser", {username: this.$el.find(".js-input-username").val()});
         },
@@ -522,24 +585,31 @@ $(function(){
         }
     });
 
-/*
-    var AdventureView = Marionette.ItemView.extend({
-        template: "#template-adventure",
+    var ActivityView = Marionette.ItemView.extend({
+        template: "#template-adventure-activity",
 
-        events: {
-            "click .js-btn-invite": "toggleInvite",
-            "click .js-btn-user": "toggleUser"
-        },
-
-        toggleInvite: function(){
-            this.$el.find(".js-container-invite").slideToggle();
-        },
-
-        toggleUser: function(){
-            //if the user is the host, then show options to remove user
+        attributes: {
+            "class": "adventure-activity"
         }
     });
-*/
+
+    var ActivitiesView = Marionette.CollectionView.extend({
+        childView: ActivityView
+    });
+
+    var NewActivityChoicesView = Marionette.ItemView.extend({
+        template: "#template-new-activity-choices",
+
+        events: {
+            "submit form": "startNextActivity"
+        },
+
+        startNextActivity: function(e){
+            e.preventDefault();
+
+            app.vent.trigger("startNextActivity", {}); //TODO: pass selected location/activity type choices
+        }
+    });
 
     new App();
 });

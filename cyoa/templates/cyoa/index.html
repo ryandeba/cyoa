@@ -9,7 +9,7 @@
         <meta name="author" content="">
         <link rel="icon" href="../../favicon.ico">
 
-        <title>Adventur-us</title>
+        <title>adventurUS</title>
 
         <link href="/static/cyoa/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="/static/cyoa/font-awesome.min.css">
@@ -27,7 +27,7 @@
 
         <style>
             body {
-                margin-top: 80px;
+                margin-top: 60px;
             }
 
             .container-adventure-users {
@@ -90,6 +90,33 @@
                     .adventure-user.invite.cancel .fa {
                         transform: rotate(45deg);
                     }
+
+            .adventure-activity {
+                padding: 10px;
+                overflow: auto;
+            }
+                .adventure-activity-icon {
+                    background-color: #18bc9c;
+                    border-radius: 100px;
+                    box-shadow: #000 -2px 2px 5px;
+                    cursor: pointer;
+                    float: left;
+                    font-size: 20px;
+                    line-height: 0;
+                    padding: 20px 0;
+                    position: relative;
+                    text-align: center;
+                    width: 40px;
+                }
+                    .adventure-activity-icon .fa {
+                        line-height: 0;
+                    }
+
+                .adventure-activity-name {
+                    float: left;
+                    padding-top: 10px;
+                    padding-left: 6px;
+                }
 
             #region-header {
                 box-shadow: #000 0px 2px 5px;
@@ -281,6 +308,9 @@
                 </div>
                 <div id="region-adventure-users"></div>
             </div>
+
+            <div id="region-adventure-activities"></div>
+            <div id="region-adventure-details"></div>
         </script>
 
         <script type="text/template" id="template-adventure-invite">
@@ -294,6 +324,29 @@
             <span class="adventure-user-username">
                 <%= username %>
             </span>
+        </script>
+
+        <script type="text/template" id="template-adventure-activity">
+            <div class="adventure-activity-icon">
+                <i class="fa fa-beer"></i>
+            </div>
+            <div class="adventure-activity-name"><%= name %></div>
+        </script>
+
+        <script type="text/template" id="template-new-activity-choices">
+            <form style="clear: both; padding-top: 10px;">
+                <h3>Locations</h3>
+                <div id="region-locations">
+                    -- location options will go here --
+                </div>
+
+                <h3>Activity Types</h3>
+                <div id="region-locations">
+                    -- activity type options will go here --
+                </div>
+
+                <button type="submit" class="btn btn-primary">Start Activity</button>
+            </form>
         </script>
 
     </head>
