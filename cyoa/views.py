@@ -3,6 +3,7 @@ import sys
 from django.core import serializers
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.db import transaction
 
 import json
 
@@ -123,7 +124,7 @@ def load_adventure(request):
                 "facebookUrl": "",
 
                 "group": adventureActivity.group,
-                "isChosen": False,
+                "isChosen": adventureActivity.is_chosen,
                 "votes": [
                     adventureActivityVote.user.username for adventureActivityVote in adventureActivity.adventureactivityvote_set.all()
                 ]
@@ -150,14 +151,30 @@ def start_next_activity(request):
 def vote_activity(request):
     adventure = Adventure.objects.get(adventureuser__user=request.user)
     adventureActivity =  adventure.adventureactivity_set.get(id=request.POST.get("id"))
-    AdventureActivityVote.objects.get_or_create(adventureActivity=adventureActivity, user=request.user)
+
+    adventureActivityVote = None
+
+    try:
+        adventureActivityVote = AdventureActivityVote.objects.get(
+            adventureActivity__adventure=adventure,
+            adventureActivity__group=adventureActivity.group,
+            user=request.user,
+        )
+    except:
+        pass
+
+    if adventureActivityVote is None: #TODO: should this restriction be enforced at the db?
+        AdventureActivityVote.objects.create(adventureActivity=adventureActivity, user=request.user)
+
+    number_of_votes = AdventureActivityVote.objects.filter(
+        adventureActivity__adventure=adventure,
+        adventureActivity__group=adventureActivity.group
+    ).count()
+
+    if number_of_votes == adventure.adventureuser_set.count():
+        adventure.choose_activity_for_group(group=adventureActivity.group)
+
     return True
-
-def voteActivity(request):
-    return []
-
-def end_voting(request): #(HOST)
-    return []
 
 def endAdventure(request): #(HOST) set date_finished on the adventure
     return []

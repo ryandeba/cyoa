@@ -183,10 +183,7 @@
             }
         </style>
 
-        <script>
-            $(function(){
-            });
-        </script>
+        <script type="text/template" id="template-noop"></script>
 
         <script type="text/template" id="template-application">
             <nav id="region-header" class="navbar navbar-default navbar-fixed-top"></nav>
@@ -345,13 +342,14 @@
         <script type="text/template" id="template-adventure-activity-vote">
             <div class="adventure-activity">
                 <div class="adventure-activity-icon">
-                    <i class="fa fa-beer"></i>
+                    <% if (userHasVotedForThis){ %>
+                        <i class="fa fa-check"></i>
+                    <% } else { %>
+                        <i class="fa fa-beer"></i>
+                    <% } %>
                 </div>
                 <div class="adventure-activity-name"><%= name %></div>
             </div>
-        </script>
-
-        <script type="text/template" id="template-adventure-activity-noop">
         </script>
 
         <script type="text/template" id="template-adventure-activities-vote">

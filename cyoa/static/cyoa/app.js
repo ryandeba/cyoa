@@ -40,6 +40,10 @@ $(function(){
 
         isInCurrentVoteRound: function(){
             return this.get("group") == this.collection.getCurrentVoteRound();
+        },
+
+        userHasVotedForThis: function(){
+            return this.get("votes").indexOf(localStorage.getItem("username")) > -1;
         }
     });
 
@@ -621,10 +625,11 @@ $(function(){
 
     var ActivityHistoryView = Marionette.ItemView.extend({
         onBeforeRender: function(){
+            debugger;
             if (this.model.hasWonPreviousVoteRound()){
                 this.template = "#template-adventure-activity";
             } else {
-                this.template = "#template-adventure-activity-noop";
+                this.template = "#template-noop";
             };
         }
     });
@@ -638,6 +643,12 @@ $(function(){
             if (this.model.isInCurrentVoteRound()){
                 this.template = "#template-adventure-activity-vote";
             };
+        },
+
+        serializeData: function(){
+            var data = this.model.toJSON();
+            data.userHasVotedForThis = this.model.userHasVotedForThis();
+            return data;
         },
 
         events: {

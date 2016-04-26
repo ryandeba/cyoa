@@ -1,4 +1,4 @@
-import uuid
+import uuid, random
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -73,6 +73,29 @@ class Adventure(models.Model):
 
     def __str__(self):
         return self.name
+
+    def choose_activity_for_group(self, group):
+        max_votes = 0
+
+        possible_adventure_activities = []
+
+        adventureActivities = self.adventureactivity_set.filter(group=group)
+
+        for adventureActivity in adventureActivities:
+            if adventureActivity.is_chosen:
+                return
+
+            number_of_votes = adventureActivity.adventureactivityvote_set.count()
+            max_votes = max(max_votes, number_of_votes)
+
+        for adventureActivity in adventureActivities:
+            if adventureActivity.adventureactivityvote_set.count() == max_votes:
+                possible_adventure_activities.append(adventureActivity)
+
+        chosen_adventure_activity = random.choice(possible_adventure_activities)
+        chosen_adventure_activity.is_chosen = True
+        chosen_adventure_activity.save()
+
 
 class AdventureUser(models.Model):
     adventure = models.ForeignKey(Adventure, on_delete=models.CASCADE)
