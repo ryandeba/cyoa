@@ -35,11 +35,15 @@ $(function(){
         },
 
         hasWonPreviousVoteRound: function(){
-            return this.get("isChosen") && this.get("group") < this.collection.getCurrentVoteRound();
+            return this.get("isChosen") && this.get("group") < this.collection.getCurrentVoteGroup();
+        },
+
+        hasWonCurrentRound: function(){
+            return this.get("isChosen") && this.get("group") == this.collection.getCurrentVoteGroup();
         },
 
         isInCurrentVoteRound: function(){
-            return this.get("group") == this.collection.getCurrentVoteRound();
+            return this.get("group") == this.collection.getCurrentVoteGroup() && !this.collection.getCurrentRoundVotingHasEnded();
         },
 
         userHasVotedForThis: function(){
@@ -62,16 +66,24 @@ $(function(){
     var Activities = Backbone.Collection.extend({
         model: Activity,
 
-        getCurrentVoteRound: function(){
-            return this.max(function(model){
+        getCurrentVoteGroup: function(){
+            var maxGroup = this.max(function(model){
                 return model.get("group");
             }).get("group");
+            return maxGroup;
         },
 
         getActivitiesByGroup: function(group){
             return this.filter(function(model){
                 return model.get("group") == group;
             });
+        },
+
+        getCurrentRoundVotingHasEnded: function(){
+            var currentGroup = this.getCurrentVoteGroup();
+            return this.filter(function(model){
+                return model.get("group") == currentGroup && model.get("isChosen") == true;
+            }).length != 0;
         }
     });
 
@@ -643,7 +655,7 @@ $(function(){
 
     var ActivityHistoryView = Marionette.ItemView.extend({
         onBeforeRender: function(){
-            if (this.model.hasWonPreviousVoteRound()){
+            if (this.model.hasWonPreviousVoteRound() || this.model.hasWonCurrentRound()){
                 this.template = "#template-adventure-activity";
             } else {
                 this.template = "#template-noop";
@@ -659,6 +671,8 @@ $(function(){
         onBeforeRender: function(){
             if (this.model.isInCurrentVoteRound()){
                 this.template = "#template-adventure-activity-vote";
+            } else {
+                this.template = "#template-noop";
             };
         },
 
@@ -680,8 +694,16 @@ $(function(){
 
     var ActivitiesVoteView = Marionette.CompositeView.extend({
         template: "#template-adventure-activities-vote",
+
         childView: ActivityVoteView,
-        childViewContainer: ".js-activities"
+
+        childViewContainer: ".js-activities",
+
+        onRender: function(){
+            if (this.$el.find(".adventure-activity")){
+                this.$el.hide();
+            };
+        }
     });
 
     var ActivitiesLayoutView = Marionette.LayoutView.extend({
@@ -689,7 +711,8 @@ $(function(){
 
         regions: {
             history: "#region-activity-history",
-            vote: "#region-activity-vote"
+            vote: "#region-activity-vote",
+            host: "#region-activity-host",
         },
 
         initialize: function(){
