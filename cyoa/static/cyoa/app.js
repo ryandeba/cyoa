@@ -44,6 +44,18 @@ $(function(){
 
         userHasVotedForThis: function(){
             return this.get("votes").indexOf(localStorage.getItem("username")) > -1;
+        },
+
+        getPercentVoted: function(){
+            var totalVotes = 0;
+            _.each(this.collection.getActivitiesByGroup(this.get("group")), function(model){
+                totalVotes += model.get("votes").length;
+            });
+            try {
+                return (this.get("votes").length / totalVotes) * 100;
+            } catch(e){
+                return 0;
+            }
         }
     });
 
@@ -54,6 +66,12 @@ $(function(){
             return this.max(function(model){
                 return model.get("group");
             }).get("group");
+        },
+
+        getActivitiesByGroup: function(group){
+            return this.filter(function(model){
+                return model.get("group") == group;
+            });
         }
     });
 
@@ -625,7 +643,6 @@ $(function(){
 
     var ActivityHistoryView = Marionette.ItemView.extend({
         onBeforeRender: function(){
-            debugger;
             if (this.model.hasWonPreviousVoteRound()){
                 this.template = "#template-adventure-activity";
             } else {
@@ -648,6 +665,7 @@ $(function(){
         serializeData: function(){
             var data = this.model.toJSON();
             data.userHasVotedForThis = this.model.userHasVotedForThis();
+            data.percentVoted = this.model.getPercentVoted();
             return data;
         },
 
