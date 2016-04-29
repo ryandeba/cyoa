@@ -6,8 +6,9 @@ from django.http import HttpResponse
 from django.db import transaction
 from django.db.models import Max
 
-
 import json
+
+from datetime import datetime
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
@@ -34,6 +35,7 @@ def api(request, method):
         "invite_user": invite_user,
         "start_next_activity": start_next_activity,
         "vote_activity": vote_activity,
+        "end_adventure": end_adventure,
     }
 #    if request.method == "POST":
 #        request.user = AppUser.objects.get(id=request.POST.get("id")).user
@@ -105,11 +107,12 @@ def decline_adventure(request):
 
 def load_adventure(request):
     try:
-        adventure = Adventure.objects.get(adventureuser__user=request.user)
+        adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     except:
         return {}
     adventure_data = {
         "name": adventure.name,
+        "isFinished": False,
         "host": adventure.adventureuser_set.get(is_host=True).user.username,
         "users": [
             {
@@ -133,6 +136,8 @@ def load_adventure(request):
             } for adventureActivity in adventure.adventureactivity_set.all()
         ],
     }
+    if adventure.date_finished is not None:
+        adventure_data["isFinished"] = True
     return adventure_data
 
 def invite_user(request): #load adventure data for the adventure that the user is in (if applicable)
@@ -179,5 +184,8 @@ def vote_activity(request):
 
     return True
 
-def endAdventure(request): #(HOST) set date_finished on the adventure
-    return []
+def end_adventure(request):
+    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    adventure.date_finished = datetime.now()
+    adventure.save()
+    return True

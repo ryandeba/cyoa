@@ -91,7 +91,8 @@ $(function(){
 
     var Adventure = Backbone.Model.extend({
         defaults: {
-            name: ""
+            name: "",
+            isFinished: false
         },
 
         initialize: function(){
@@ -104,11 +105,11 @@ $(function(){
         },
 
         canStartNextRoundOfVoting: function(){
-            return this.userIsHost() && this.get("activities").currentRoundOfVotingHasEnded();
+            return this.get("isFinished") == false && this.userIsHost() && this.get("activities").currentRoundOfVotingHasEnded();
         },
 
         canEndAdventure: function(){
-            return this.userIsHost();
+            return this.get("isFinished") == false && this.userIsHost();
         }
     });
 
@@ -136,6 +137,7 @@ $(function(){
             this.listenTo(this.vent, "inviteUser", this.inviteUser);
             this.listenTo(this.vent, "startNextActivity", this.startNextActivity);
             this.listenTo(this.vent, "submitVote", this.submitVote);
+            this.listenTo(this.vent, "endAdventure", this.endAdventure);
 
             this.listenTo(this.vent, "saveProfile", this.saveProfile);
 
@@ -149,15 +151,6 @@ $(function(){
             } else {
                 this.login({username: localStorage.getItem("username"), password: localStorage.getItem("password")});
             };
-
-/*
-            if (userData.username.length == 0){
-                this.vent.trigger("showView", "login");
-            } else {
-                //this.vent.trigger("showView", "home");
-                this.loadAdventure();
-            }
-*/
         },
 
         showView: function(view){
@@ -344,6 +337,15 @@ $(function(){
                 }
             });
         },
+
+        endAdventure: function(){
+            $.ajax({
+                url: "/api/end_adventure/",
+                success: function(response){
+                    console.log("End Adventure", response);
+                }
+            });
+        },
  
         saveProfile: function(){
             var self = this;
@@ -388,6 +390,7 @@ $(function(){
                     };
                     self.adventure.set({name: data.name});
                     self.adventure.set({host: data.host});
+                    self.adventure.set({isFinished: data.isFinished});
 
                     self.adventure.get("users").set(data.users);
                     self.adventure.get("activities").set(data.activities);
@@ -571,7 +574,8 @@ $(function(){
 
             setTimeout(function(){ //TODO: is there a better way to do this?
                 self.getRegion("users").show(new AdventureUsersView({collection: self.model.get("users")}));
-                self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
+                //self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
+                self.getRegion("activities").show(new ActivitiesLayoutView({model: self.model}));
                 self.getRegion("opts").show(new AdventureOptionsView({model: self.model}));
 
                 if (!self.model.userIsHost()){
@@ -731,8 +735,10 @@ $(function(){
         initialize: function(){
             var self = this;
             setTimeout(function(){
-                self.getRegion("history").show(new ActivitiesHistoryView({collection: self.collection}));
-                self.getRegion("vote").show(new ActivitiesVoteView({collection: self.collection}));
+                self.getRegion("history").show(new ActivitiesHistoryView({collection: self.model.get("activities")}));
+                if (self.model.get("isFinished") == false){
+                    self.getRegion("vote").show(new ActivitiesVoteView({collection: self.model.get("activities")}));
+                };
             }, 0);
         }
     });
@@ -744,6 +750,7 @@ $(function(){
             "click .js-btn-choose-activity-options": "chooseActivityOptions",
             "submit form": "startNextActivity",
             "click .js-btn-end-adventure": "endAdventure",
+            "click .js-btn-end-adventure-confirm": "confirmEndAdventure",
             "click .js-btn-end-adventure-cancel": "cancelEndAdventure"
         },
 
@@ -761,6 +768,10 @@ $(function(){
         endAdventure: function(){
             this.$el.find(".js-container-end-adventure-button").hide();
             this.$el.find(".js-container-end-adventure-confirm").show();
+        },
+
+        confirmEndAdventure: function(){
+            app.vent.trigger("endAdventure");
         },
 
         cancelEndAdventure: function(){
