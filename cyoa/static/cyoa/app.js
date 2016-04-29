@@ -105,6 +105,10 @@ $(function(){
 
         canStartNextRoundOfVoting: function(){
             return this.userIsHost() && this.get("activities").currentRoundOfVotingHasEnded();
+        },
+
+        canEndAdventure: function(){
+            return this.userIsHost();
         }
     });
 
@@ -738,7 +742,9 @@ $(function(){
 
         events: {
             "click .js-btn-choose-activity-options": "chooseActivityOptions",
-            "submit form": "startNextActivity"
+            "submit form": "startNextActivity",
+            "click .js-btn-end-adventure": "endAdventure",
+            "click .js-btn-end-adventure-cancel": "cancelEndAdventure"
         },
 
         chooseActivityOptions: function(){
@@ -752,9 +758,20 @@ $(function(){
             app.vent.trigger("startNextActivity", {}); //TODO: pass selected location/activity type choices
         },
 
+        endAdventure: function(){
+            this.$el.find(".js-container-end-adventure-button").hide();
+            this.$el.find(".js-container-end-adventure-confirm").show();
+        },
+
+        cancelEndAdventure: function(){
+            this.$el.find(".js-container-end-adventure-button").show();
+            this.$el.find(".js-container-end-adventure-confirm").hide();
+        },
+
         serializeData: function(){
             var data = this.model.toJSON();
             data.canStartNextRoundOfVoting = this.model.canStartNextRoundOfVoting();
+            data.canEndAdventure = this.model.canEndAdventure();
             return data;
         }
     });

@@ -382,6 +382,25 @@
                         <button type="submit" class="btn btn-primary">Start Activity</button>
                     </form>
                 </div>
+            <% } else if (canEndAdventure) { %>
+                <div class="js-container-end-adventure-button">
+                    <button type="button" class="btn btn-danger js-btn-end-adventure">
+                        End Adventure
+                    </button>
+                </div>
+                <div class="js-container-end-adventure-confirm" style="display: none;">
+                    <p>
+                        Are you sure you want to end the adventure?
+                    </p>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-danger js-btn-end-adventure-confirm">
+                            Yes
+                        </button>
+                        <button type="button" class="btn btn-default js-btn-end-adventure-cancel">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
             <% } %>
         </script>
 
