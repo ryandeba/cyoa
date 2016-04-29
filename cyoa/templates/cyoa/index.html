@@ -308,7 +308,7 @@
             </div>
 
             <div id="region-adventure-activities"></div>
-            <div id="region-adventure-host"></div>
+            <div id="region-adventure-options"></div>
         </script>
 
         <script type="text/template" id="template-adventure-invite">
@@ -324,11 +324,9 @@
             </span>
         </script>
 
-
         <script type="text/template" id="template-adventure-activity-layout">
             <div id="region-activity-history"></div>
             <div id="region-activity-vote"></div>
-            <div id="region-activity-host"></div>
         </script>
 
         <script type="text/template" id="template-adventure-activity">
@@ -362,20 +360,29 @@
             <div class="js-activities"></div>
         </script>
 
-        <script type="text/template" id="template-new-activity-choices">
-            <form style="clear: both; padding-top: 10px;">
-                <h3>Locations</h3>
-                <div id="region-locations">
-                    -- location options will go here --
+        <script type="text/template" id="template-adventure-options">
+            <% if (canStartNextRoundOfVoting){ %>
+                <div class="js-container-start-next-activity-button">
+                    <button type="button" class="btn btn-primary js-btn-choose-activity-options">
+                        Choose Next Activity Options
+                    </button>
                 </div>
+                <div class="js-container-start-next-activity-options" style="display: none;">
+                    <form style="clear: both; padding-top: 10px;">
+                        <h3>Locations</h3>
+                        <div id="region-locations">
+                            -- location options will go here --
+                        </div>
 
-                <h3>Activity Types</h3>
-                <div id="region-locations">
-                    -- activity type options will go here --
+                        <h3>Activity Types</h3>
+                        <div id="region-locations">
+                            -- activity type options will go here --
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Start Activity</button>
+                    </form>
                 </div>
-
-                <button type="submit" class="btn btn-primary">Start Activity</button>
-            </form>
+            <% } %>
         </script>
 
     </head>

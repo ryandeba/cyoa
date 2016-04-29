@@ -43,7 +43,7 @@ $(function(){
         },
 
         isInCurrentVoteRound: function(){
-            return this.get("group") == this.collection.getCurrentVoteGroup() && !this.collection.getCurrentRoundVotingHasEnded();
+            return this.get("group") == this.collection.getCurrentVoteGroup() && !this.collection.currentRoundOfVotingHasEnded();
         },
 
         userHasVotedForThis: function(){
@@ -56,7 +56,9 @@ $(function(){
                 totalVotes += model.get("votes").length;
             });
             try {
-                return (this.get("votes").length / totalVotes) * 100;
+                var percent = (this.get("votes").length / totalVotes) * 100;
+                percent = isNaN(percent) ? 0 : percent
+                return percent;
             } catch(e){
                 return 0;
             }
@@ -79,7 +81,7 @@ $(function(){
             });
         },
 
-        getCurrentRoundVotingHasEnded: function(){
+        currentRoundOfVotingHasEnded: function(){
             var currentGroup = this.getCurrentVoteGroup();
             return this.filter(function(model){
                 return model.get("group") == currentGroup && model.get("isChosen") == true;
@@ -95,6 +97,14 @@ $(function(){
         initialize: function(){
             this.set("users", new AdventureUsers());
             this.set("activities", new Activities());
+        },
+
+        userIsHost: function(){
+            return this.get("host") == localStorage.getItem("username");
+        },
+
+        canStartNextRoundOfVoting: function(){
+            return this.userIsHost() && this.get("activities").currentRoundOfVotingHasEnded();
         }
     });
 
@@ -558,9 +568,9 @@ $(function(){
             setTimeout(function(){ //TODO: is there a better way to do this?
                 self.getRegion("users").show(new AdventureUsersView({collection: self.model.get("users")}));
                 self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
-                //self.getRegion("host").show(new NewActivityChoicesView());
+                self.getRegion("opts").show(new AdventureOptionsView({model: self.model}));
 
-                if (self.model.get("host") != localStorage.getItem("username")){
+                if (!self.model.userIsHost()){
                     self.$el.find(".js-btn-invite").hide();
                 };
 
@@ -572,7 +582,7 @@ $(function(){
         regions: {
             users: "#region-adventure-users",
             activities: "#region-adventure-activities",
-            host: "#region-adventure-host"
+            opts: "#region-adventure-options" //can't call it options :(
         },
 
         events: {
@@ -700,7 +710,7 @@ $(function(){
         childViewContainer: ".js-activities",
 
         onRender: function(){
-            if (this.$el.find(".adventure-activity")){
+            if (this.$el.find(".adventure-activity") == 0){
                 this.$el.hide();
             };
         }
@@ -711,8 +721,7 @@ $(function(){
 
         regions: {
             history: "#region-activity-history",
-            vote: "#region-activity-vote",
-            host: "#region-activity-host",
+            vote: "#region-activity-vote"
         },
 
         initialize: function(){
@@ -724,17 +733,29 @@ $(function(){
         }
     });
 
-    var NewActivityChoicesView = Marionette.ItemView.extend({
-        template: "#template-new-activity-choices",
+    var AdventureOptionsView = Marionette.ItemView.extend({
+        template: "#template-adventure-options",
 
         events: {
+            "click .js-btn-choose-activity-options": "chooseActivityOptions",
             "submit form": "startNextActivity"
+        },
+
+        chooseActivityOptions: function(){
+            this.$el.find(".js-container-start-next-activity-button").hide();
+            this.$el.find(".js-container-start-next-activity-options").show();
         },
 
         startNextActivity: function(e){
             e.preventDefault();
 
             app.vent.trigger("startNextActivity", {}); //TODO: pass selected location/activity type choices
+        },
+
+        serializeData: function(){
+            var data = this.model.toJSON();
+            data.canStartNextRoundOfVoting = this.model.canStartNextRoundOfVoting();
+            return data;
         }
     });
 

@@ -4,6 +4,8 @@ from django.core import serializers
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.db import transaction
+from django.db.models import Max
+
 
 import json
 
@@ -143,8 +145,9 @@ def start_next_activity(request):
     #TODO: use the filters/activity types posted to filter random choices. related - do we allow duplicates? what happens when you get to the end?
     adventure = Adventure.objects.get(adventureuser__user=request.user)
 
+    max_group = adventure.adventureactivity_set.all().aggregate(Max("group"))["group__max"]
     for activity in Activity.objects.order_by('?')[:3]:
-        AdventureActivity.objects.create(adventure=adventure, activity=activity, group=1)
+        AdventureActivity.objects.create(adventure=adventure, activity=activity, group=max_group+1)
 
     return True
 
