@@ -98,22 +98,18 @@ def create_user(request):
         username= request.POST.get('username')
         password= request.POST.get('password')
 
-        appUser = AppUser.objects.create()
-
-        user = User.objects.create_user(username=username, password=password) #TODO: can I just save a user without a password?
-        appUser.user = user
+        user = User.objects.create_user(username=username, password=password)
+        appUser = AppUser.objects.create(user=user)
         appUser.save()
 
-        user = authenticate(username=username, password=password)
         if user is not None:
-            login(request, user)
-            return {
+            request.response["data"] = {
                 "username": username,
-                "id": str(password),
+                "token": str(appUser.id),
             }
     except:
-        pass
-    return False
+        request.response["success"] = False
+        request.response["error_message"] = "Could not create user"
 
 @require_authentication
 def create_adventure(request):

@@ -219,24 +219,29 @@
                 <form class="js-form-login">
                     <input type="text" class="form-control js-input-username" placeholder="Username" required>
                     <input type="password" class="form-control js-input-password" placeholder="Password" required>
-                    <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Login!">Login!</button>
+                    <button class="btn btn-primary" type="submit" style="width: 80px;" data-default="Submit">Submit</button>
                     <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
                 </form>
 
-                <br>
-                <button class="btn btn-primary" type="button">Create new account</button>
+                <p>
+                -- or --
+                </p>
+
+                <button class="btn btn-primary js-btn-create" type="button">Create new account</button>
             </div>
         </script>
 
         <script type="text/template" id="template-create-account">
-            <div class="col-xs-12">
-                Create Account
+            <div class="col-xs-12" style="margin-top: 10px;">
                 <form class="js-form-create-user">
                     <input type="text" class="form-control js-input-username" placeholder="Username" required>
                     <input type="password" class="form-control js-input-password" placeholder="Password" required>
-                    <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
+                    <button class="btn btn-primary" type="submit" style="width: 80px;" data-default="Submit">Submit</button>
                     <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
                 </form>
+
+                <br>
+                <button class="btn btn-primary js-btn-cancel" type="button">Cancel</button>
             </div>
         </script>
 
@@ -289,7 +294,7 @@
                             <div class="input-group">
                                 <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
                                 <span class="input-group-btn">
-                                    <button class="btn btn-primary js-btn-submit" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
+                                    <button class="btn btn-primary" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
                                 </span>
                             </div>
                             <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>

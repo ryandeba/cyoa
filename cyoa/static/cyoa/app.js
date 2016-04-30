@@ -159,8 +159,12 @@ $(function(){
             };
             */
             this.adventure = new Adventure();
+            this.loadAdventureTimeout = undefined;
+
             this.completedAdventures = new Adventures();
             this.achievements = new Achievements();
+
+            this.currentView = "";
 
             this.layoutView = new ApplicationLayoutView();
             this.layoutView.render();
@@ -182,7 +186,7 @@ $(function(){
             this.listenTo(this.vent, "adventureCreated", this.adventureCreated);
 
             this.listenTo(this.vent, "inviteUser", this.inviteUser);
-            this.listenTo(this.vent, "invite:success", this.loadAdventure);
+            this.listenTo(this.vent, "invite:success", this.inviteUserSuccess);
 
             this.listenTo(this.vent, "startNextActivity", this.startNextActivity);
             this.listenTo(this.vent, "startNextActivity:success", this.loadAdventure);
@@ -220,6 +224,11 @@ $(function(){
                 view = "adventure";
             };
 
+            if (this.currentView == view){
+                return;
+            };
+
+            var defaultTitleHtml = '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>';
             var views = {
                 "loading": {
                     titleHtml: 'Loading...',
@@ -227,12 +236,17 @@ $(function(){
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoadingView()) }
                 },
                 "login": {
-                    titleHtml: '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>',
+                    titleHtml: defaultTitleHtml,
                     backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoginView({model: self.user})) }
                 },
+                "createUser": {
+                    titleHtml: defaultTitleHtml,
+                    backButton: false,
+                    viewFunction: function(){ self.layoutView.getRegion("main").show(new CreateUserView({model: self.user})) }
+                },
                 "home": {
-                    titleHtml: '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>',
+                    titleHtml: defaultTitleHtml,
                     backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new HomeView()); }
                 },
@@ -248,7 +262,7 @@ $(function(){
                     titleHtml: self.adventure.get("name"),
                     backButton: false, //TODO: this should be true when creating a new adventure
                     viewFunction: function(){
-                        self.layoutView.getRegion("main").show(new AdventureView({model: self.adventure}));
+                        self.layoutView.getRegion("main").show(new AdventureLayoutView({model: self.adventure}));
                     }
                     //TODO: do menu options go here? or maybe the menu's model should be set to self.adventure?
                 },
@@ -269,6 +283,7 @@ $(function(){
             };
 
             views[view].viewFunction();
+            this.currentView = view;
             this.vent.trigger("viewChanged", views[view]);
         },
 
@@ -323,24 +338,25 @@ $(function(){
         },
 
         createUser: function(data){
-            /*
             var self = this;
 
             $.ajax({
                 url: "/api/create_user/",
                 type: "POST",
                 data: {
-                    username: data.username
+                    username: data.username,
+                    password: data.password
                 },
-                success: function(data){
-                    if (data){
+                success: function(response){
+                    if (response.success){
+                        self.user.set("username", response.data.username);
+                        self.user.set("token", response.data.token);
                         self.vent.trigger("userCreated", data);
                     } else {
                         self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
                     };
                 }
             });
-            */
         },
 
         createAdventure: function(data){
@@ -357,7 +373,6 @@ $(function(){
                     if (response.success){
                         self.vent.trigger("adventureCreated");
                     } else {
-                        //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
                     };
                 }
             });
@@ -387,10 +402,14 @@ $(function(){
                     if (response.success){
                         self.vent.trigger("invite:success");
                     } else {
-                        //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
                     };
                 }
             });
+        },
+
+        inviteUserSuccess: function(){
+            this.adventure.get("users").trigger("change");
+            this.loadAdventure();
         },
 
         startNextActivity: function(data){
@@ -449,9 +468,7 @@ $(function(){
                 data: self.user.toJSON(),
                 success: function(data){
                     if (data){
-                        //self.vent.trigger("userCreated", {username: data.username});
                     } else {
-                        //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
                     };
                 }
             });
@@ -477,6 +494,8 @@ $(function(){
         loadAdventure: function(){
             var self = this;
 
+            clearTimeout(self.loadAdventureTimeout);
+
             $.ajax({
                 url: "/api/load_adventure/",
                 type: "POST",
@@ -489,14 +508,20 @@ $(function(){
                         self.vent.trigger("showView", "home");
                         return;
                     };
-                    self.adventure.set({name: response.data.adventure_data.name});
-                    self.adventure.set({host: response.data.adventure_data.host});
-                    self.adventure.set({isFinished: response.data.adventure_data.isFinished});
+                    self.adventure.set("name", response.data.adventure_data.name);
+                    self.adventure.set("host", response.data.adventure_data.host);
+                    self.adventure.set("isFinished", response.data.adventure_data.isFinished);
 
                     self.adventure.get("users").set(response.data.adventure_data.users);
                     self.adventure.get("activities").set(response.data.adventure_data.activities);
 
                     self.vent.trigger("showView", "adventure");
+
+                    if (self.adventure.get("isFinished") == false){
+                        self.loadAdventureTimeout = setTimeout(function(){
+                            self.loadAdventure();
+                        }, 5000);
+                    };
                 }
             });
         },
@@ -622,11 +647,8 @@ $(function(){
         },
 
         events: {
-            "submit .js-form-login": "login"
-        },
-
-        initialize: function(){
-            //this.listenTo(app.vent, "userCreatedFailed", this.showError);
+            "submit .js-form-login": "login",
+            "click .js-btn-create": "createNewAccount"
         },
 
         login: function(e){
@@ -637,24 +659,37 @@ $(function(){
 
             $username.prop("disabled", true);
             $password.prop("disabled", true);
-            //this.$el.find(".js-btn-submit").prop("disabled", true).html("<i class='fa fa-spinner fa-spin'></i>");
 
             app.vent.trigger("login", {username: $username.val(), password: $password.val()});
         },
 
-        showError: function(data){
-            /*
-            var $username = this.$el.find(".js-input-username");
-            var $submit = this.$el.find(".js-btn-submit");
+        createNewAccount: function(){
+            app.vent.trigger("showView", "createUser");
+        }
+    });
 
-            console.warn(data);
+    var CreateUserView = Marionette.ItemView.extend({
+        template: "#template-create-account",
 
-            $submit.prop("disabled", false).html($submit.data("default"));
-            $username.prop("disabled", false);
+        attributes: {
+            class: "row"
+        },
 
-            this.$el.find("form").addClass("has-error");
-            this.$el.find(".js-container-error-message").show().html("An error occurred");
-            */
+        events: {
+            "submit form": "submit",
+            "click .js-btn-cancel": "cancel"
+        },
+
+        submit: function(e){
+            e.preventDefault();
+            app.vent.trigger("createUser", {
+                username: this.$el.find(".js-input-username").val(),
+                password: this.$el.find(".js-input-password").val()
+            });
+        },
+
+        cancel: function(){
+            app.vent.trigger("showView", "login");
         }
     });
 
@@ -703,11 +738,12 @@ $(function(){
         }
     });
 
-    var AdventureView = Marionette.LayoutView.extend({
+    var AdventureLayoutView = Marionette.LayoutView.extend({
         initialize: function(){
             var self = this;
 
             this.listenTo(this.model, "change", this.render);
+            this.listenTo(this.model.get("users"), "change", this.hideInviteForm);
             this.listenTo(app.vent, "adventureInviteView:input_not_empty", this.enableInviteUser);
             this.listenTo(app.vent, "adventureInviteView:input_empty", this.disableInviteUser);
 
@@ -722,6 +758,10 @@ $(function(){
                 };
 
             }, 0);
+        },
+
+        onRender: function(){
+            console.log("render AdventureLayoutView");
         },
 
         template: "#template-adventure",
@@ -789,7 +829,11 @@ $(function(){
     });
 
     var AdventureUsersView = Marionette.CollectionView.extend({
-        childView:  AdventureUserView
+        childView:  AdventureUserView,
+
+        initialize: function(){
+            this.listenTo(this.collection, "change", this.render);
+        }
     });
 
     var AdventureUserInviteView = Marionette.ItemView.extend({
@@ -867,6 +911,10 @@ $(function(){
         childView: ActivityVoteView,
 
         childViewContainer: ".js-activities",
+
+        initialize: function(){
+            this.listenTo(this.collection, "change", this.render);
+        },
 
         serializeData: function(){
             var data = this.model.toJSON();
