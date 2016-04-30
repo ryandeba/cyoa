@@ -142,22 +142,24 @@ def load_adventure(request):
 
 def invite_user(request): #load adventure data for the adventure that the user is in (if applicable)
     appUser = AppUser.objects.get(user__username=request.POST.get("username"))
-    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     adventureUser, created = AdventureUser.objects.get_or_create(adventure=adventure, user=appUser.user)
     return True
 
 def start_next_activity(request):
     #TODO: use the filters/activity types posted to filter random choices. related - do we allow duplicates? what happens when you get to the end?
-    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
 
     max_group = adventure.adventureactivity_set.all().aggregate(Max("group"))["group__max"]
+    if max_group == None:
+        max_group = 0
     for activity in Activity.objects.order_by('?')[:3]:
         AdventureActivity.objects.create(adventure=adventure, activity=activity, group=max_group+1)
 
     return True
 
 def vote_activity(request):
-    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     adventureActivity =  adventure.adventureactivity_set.get(id=request.POST.get("id"))
 
     adventureActivityVote = None
@@ -185,7 +187,7 @@ def vote_activity(request):
     return True
 
 def end_adventure(request):
-    adventure = Adventure.objects.get(adventureuser__user=request.user)
+    adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     adventure.date_finished = datetime.now()
     adventure.save()
     return True

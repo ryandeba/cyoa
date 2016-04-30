@@ -356,8 +356,12 @@
         </script>
 
         <script type="text/template" id="template-adventure-activities-vote">
-            <strong>Time to vote!</strong>
-            <small>Tap one of the activities below to cast your vote</small>
+            <% if (canVoteOnNextActivity){ %>
+                <strong>Time to vote!</strong>
+                <small>Tap one of the activities below to cast your vote</small>
+            <% } else if (waitingOnHostToStartNextActivity){ %>
+                -- waiting on host --
+            <% } %>
             <div class="js-activities"></div>
         </script>
 
@@ -383,7 +387,7 @@
                         <button type="submit" class="btn btn-primary">Start Activity</button>
                     </form>
                 </div>
-            <% } else if (canEndAdventure) { %>
+            <% } if (canEndAdventure) { %>
                 <div class="js-container-end-adventure-button">
                     <button type="button" class="btn btn-danger js-btn-end-adventure">
                         End Adventure

@@ -5,6 +5,7 @@ $(function(){
     var User = Backbone.Model.extend({
         defaults: {
             "username": "",
+            "password": "",
             "email": "",
             "firstName": "",
             "lastName": "",
@@ -47,7 +48,7 @@ $(function(){
         },
 
         userHasVotedForThis: function(){
-            return this.get("votes").indexOf(localStorage.getItem("username")) > -1;
+            return this.get("votes").indexOf(app.user.get("username")) > -1;
         },
 
         getPercentVoted: function(){
@@ -69,10 +70,15 @@ $(function(){
         model: Activity,
 
         getCurrentVoteGroup: function(){
-            var maxGroup = this.max(function(model){
-                return model.get("group");
-            }).get("group");
-            return maxGroup;
+            try {
+                var maxGroup = this.max(function(model){
+                    return model.get("group");
+                }).get("group");
+                return maxGroup;
+            } catch(e){
+                console.warn("current vote group could not be determined", e);
+            }
+            return 0;
         },
 
         getActivitiesByGroup: function(group){
@@ -105,7 +111,20 @@ $(function(){
         },
 
         canStartNextRoundOfVoting: function(){
-            return this.get("isFinished") == false && this.userIsHost() && this.get("activities").currentRoundOfVotingHasEnded();
+            return this.get("isFinished") == false
+                && this.userIsHost()
+                && (
+                    this.get("activities").length == 0
+                    || this.get("activities").currentRoundOfVotingHasEnded()
+                );
+        },
+
+        canVoteOnNextActivity: function(){
+            return this.get("activities").currentRoundOfVotingHasEnded() == false;
+        },
+
+        waitingOnHostToStartNextActivity: function(){
+            return this.userIsHost() == false && true; //TODO
         },
 
         canEndAdventure: function(){
@@ -118,6 +137,10 @@ $(function(){
             app = this;
 
             this.user = new User();
+            if (localStorage.getItem("username") != null && localStorage.getItem("password") != null){
+                this.user.set("username", localStorage.getItem("username"));
+                this.user.set("password", localStorage.getItem("password"));
+            };
             this.adventure = new Adventure();
 
             this.layoutView = new ApplicationLayoutView();
@@ -143,13 +166,10 @@ $(function(){
 
             this.listenTo(this.vent, "showView", this.showView);
 
-            if (
-                localStorage.getItem("username") == null
-                || localStorage.getItem("password") == null
-            ){
-                this.vent.trigger("showView", "login");
-            } else {
+            if (this.user.get("username").length > 0 && this.user.get("password").length > 0){
                 this.login({username: localStorage.getItem("username"), password: localStorage.getItem("password")});
+            } else {
+                this.vent.trigger("showView", "login");
             };
         },
 
@@ -717,10 +737,11 @@ $(function(){
 
         childViewContainer: ".js-activities",
 
-        onRender: function(){
-            if (this.$el.find(".adventure-activity") == 0){
-                this.$el.hide();
-            };
+        serializeData: function(){
+            var data = this.model.toJSON();
+            data.canVoteOnNextActivity = this.model.canVoteOnNextActivity();
+            data.waitingOnHostToStartNextActivity = this.model.waitingOnHostToStartNextActivity();
+            return data;
         }
     });
 
@@ -737,7 +758,7 @@ $(function(){
             setTimeout(function(){
                 self.getRegion("history").show(new ActivitiesHistoryView({collection: self.model.get("activities")}));
                 if (self.model.get("isFinished") == false){
-                    self.getRegion("vote").show(new ActivitiesVoteView({collection: self.model.get("activities")}));
+                    self.getRegion("vote").show(new ActivitiesVoteView({model: self.model, collection: self.model.get("activities")}));
                 };
             }, 0);
         }
