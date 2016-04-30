@@ -32,11 +32,12 @@ def api(request, method):
         "load_profile": load_profile,
         "create_adventure": create_adventure,
         "load_adventure": load_adventure,
+        "load_completed_adventures": load_completed_adventures,
         "invite_user": invite_user,
         "start_next_activity": start_next_activity,
         "vote_activity": vote_activity,
         "end_adventure": end_adventure,
-        "load_completed_adventures": load_completed_adventures,
+        "load_achievements": load_achievements,
     }
 #    if request.method == "POST":
 #        request.user = AppUser.objects.get(id=request.POST.get("id")).user
@@ -201,3 +202,6 @@ def end_adventure(request):
     adventure.date_finished = datetime.now()
     adventure.save()
     return True
+
+def load_achievements(request):
+    return []

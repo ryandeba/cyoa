@@ -136,6 +136,13 @@ $(function(){
         model: Adventure
     });
 
+    var Achievement = Backbone.Model.extend({
+    });
+
+    var Achievements = Backbone.Collection.extend({
+        model: Achievement
+    });
+
     var App = Backbone.Marionette.Application.extend({
         initialize: function(options) {
             app = this;
@@ -147,6 +154,7 @@ $(function(){
             };
             this.adventure = new Adventure();
             this.completedAdventures = new Adventures();
+            this.achievements = new Achievements();
 
             this.layoutView = new ApplicationLayoutView();
             this.layoutView.render();
@@ -208,7 +216,7 @@ $(function(){
                 },
                 "adventure": {
                     titleHtml: self.adventure.get("name"),
-                    backButton: false,
+                    backButton: false, //TODO: this should be true when creating a new adventure
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AdventureView({model: self.adventure}));
                     }
@@ -219,6 +227,13 @@ $(function(){
                     backButton: true,
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new CompletedAdventuresView({collection: self.completedAdventures}));
+                    }
+                },
+                "achievements": {
+                    titleHtml: "Achievements",
+                    backButton: true,
+                    viewFunction: function(){
+                        self.layoutView.getRegion("main").show(new AchievementsView({collection: self.achievements}));
                     }
                 }
             };
@@ -603,7 +618,8 @@ $(function(){
 
         events: {
             "click .js-btn-new": "newAdventure",
-            "click .js-btn-completed": "completedAdventures"
+            "click .js-btn-completed": "completedAdventures",
+            "click .js-btn-achievements": "achievements"
         },
 
         newAdventure: function(){
@@ -612,6 +628,10 @@ $(function(){
 
         completedAdventures: function(){
             app.vent.trigger("showView", "completedAdventures");
+        },
+
+        achievements: function(){
+            app.vent.trigger("showView", "achievements");
         }
     });
 
@@ -690,15 +710,6 @@ $(function(){
         childView: CompletedAdventureView,
 
         childViewContainer: ".js-adventures"
-
-/*
-        serializeData: function(){
-            var data = this.model.toJSON();
-            data.canVoteOnNextActivity = this.model.canVoteOnNextActivity();
-            data.waitingOnHostToStartNextActivity = this.model.waitingOnHostToStartNextActivity();
-            return data;
-        }
-        */
     });
 
     var AdventureUserView = Marionette.ItemView.extend({
@@ -859,6 +870,20 @@ $(function(){
             return data;
         }
     });
+
+    var AchievementView = Marionette.ItemView.extend({
+        template: "#template-achievement"
+    });
+
+    var AchievementsView = Marionette.CompositeView.extend({
+        template: "#template-achievements",
+
+        childView: AchievementView,
+
+        childViewContainer: ".js-achievments"
+    });
+
+
 
     new App();
 });
