@@ -152,12 +152,6 @@ $(function(){
                 this.user.set("token", localStorage.getItem("token"));
             };
             this.listenTo(this.user, "change:token", function(){ localStorage.setItem("token", app.user.get("token")); });
-            /*
-            if (localStorage.getItem("username") != null && localStorage.getItem("password") != null){
-                this.user.set("username", localStorage.getItem("username"));
-                this.user.set("password", localStorage.getItem("password"));
-            };
-            */
             this.adventure = new Adventure();
             this.loadAdventureTimeout = undefined;
 
@@ -240,11 +234,6 @@ $(function(){
                     backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoginView({model: self.user})) }
                 },
-                "createUser": {
-                    titleHtml: defaultTitleHtml,
-                    backButton: false,
-                    viewFunction: function(){ self.layoutView.getRegion("main").show(new CreateUserView({model: self.user})) }
-                },
                 "home": {
                     titleHtml: defaultTitleHtml,
                     backButton: false,
@@ -320,6 +309,7 @@ $(function(){
                 success: function(response){
                     console.log(response);
                     if (response.success){
+                        app.user.set("username", response.data.username);
                         app.user.set("token", response.data.token)
                         self.vent.trigger("login:success");
                     } else {
@@ -642,12 +632,9 @@ $(function(){
     var LoginView = Marionette.ItemView.extend({
         template: "#template-login",
 
-        attributes: {
-            class: "row"
-        },
-
         events: {
             "submit .js-form-login": "login",
+            "click .js-btn-login": "login",
             "click .js-btn-create": "createNewAccount"
         },
 
@@ -664,32 +651,10 @@ $(function(){
         },
 
         createNewAccount: function(){
-            app.vent.trigger("showView", "createUser");
-        }
-    });
-
-    var CreateUserView = Marionette.ItemView.extend({
-        template: "#template-create-account",
-
-        attributes: {
-            class: "row"
-        },
-
-        events: {
-            "submit form": "submit",
-            "click .js-btn-cancel": "cancel"
-        },
-
-        submit: function(e){
-            e.preventDefault();
             app.vent.trigger("createUser", {
                 username: this.$el.find(".js-input-username").val(),
                 password: this.$el.find(".js-input-password").val()
             });
-        },
-
-        cancel: function(){
-            app.vent.trigger("showView", "login");
         }
     });
 

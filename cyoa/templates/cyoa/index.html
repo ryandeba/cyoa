@@ -12,7 +12,6 @@
         <title>adventurUS</title>
 
         <link href="/static/cyoa/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="/static/cyoa/font-awesome.min.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
 
         <script src="/static/cyoa/jquery.min.js"></script>
@@ -28,6 +27,16 @@
         <style>
             body {
                 margin-top: 60px;
+
+                background-color: #4fc0e8;
+                background-image: url("/static/cyoa/LoginScreen.svg");
+                background-size: 100%;
+                background-repeat: no-repeat;
+                background-position-y: 40px;
+
+                font-size: 12px;
+
+                color: #fff;
             }
 
             .container-adventure-users {
@@ -121,7 +130,7 @@
                 }
 
             #region-header {
-                box-shadow: #000 0px 2px 5px;
+                xbox-shadow: #000 0px 2px 5px;
             }
 
             #region-menu {
@@ -162,6 +171,10 @@
                 float: none;
             }
 
+            .navbar-default {
+                background-color: #4b89dc;
+            }
+
             .navbar-default .navbar-brand:hover {
                 color: #fff;
             }
@@ -182,6 +195,70 @@
                 border-radius: 4px;
                 color: #fff;
             }
+
+            .input-group {
+                margin-bottom: 10px;
+            }
+
+            .input-group .form-control {
+                padding-left: 0;
+            }
+
+            .form-control {
+                background-color: #72cded;
+
+                color: #fff;
+
+                border: none;
+                border-radius: 100px;
+
+                font-size: 12px;
+                height: 36px;
+            }
+                .form-control::-webkit-input-placeholder {
+                    color: #fff;
+                }
+
+            .input-group-addon {
+                background-color: #72cded;
+
+                color: #fff;
+
+                border: none;
+                border-radius: 100px;
+
+                padding: 0 10px;
+            }
+
+            .btn {
+                background: none;
+                color: #fff;
+
+                border-bottom: 1px solid #eee;
+
+                font-size: 11px;
+
+                padding: 0;
+            }
+            .btn.btn-lg {
+                font-size: 16px;
+                margin-bottom: 16px;
+                clear: both;
+            }
+
+            p.or:before,
+            p.or:after {
+                content: "";
+                border-bottom: 1px solid #fff;
+                width: 20px;
+                height: 1px;
+                display: inline-block;
+                position: relative;
+                bottom: 3px;
+            }
+            p.or {
+                margin: 8px 0 4px 0;
+            }
         </style>
 
         <script type="text/template" id="template-noop"></script>
@@ -189,8 +266,7 @@
         <script type="text/template" id="template-application">
             <nav id="region-header" class="navbar navbar-default navbar-fixed-top"></nav>
             <nav id="region-menu" class="collapsed"></nav>
-            <div class="container" id="region-main">
-            </div>
+            <div class="container" id="region-main"></div>
         </script>
 
         <script type="text/template" id="template-header">
@@ -215,33 +291,34 @@
         </script>
 
         <script type="text/template" id="template-login">
-            <div class="col-xs-12" style="margin-top: 10px;">
-                <form class="js-form-login">
-                    <input type="text" class="form-control js-input-username" placeholder="Username" required>
-                    <input type="password" class="form-control js-input-password" placeholder="Password" required>
-                    <button class="btn btn-primary" type="submit" style="width: 80px;" data-default="Submit">Submit</button>
-                    <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
-                </form>
-
-                <p>
-                -- or --
-                </p>
-
-                <button class="btn btn-primary js-btn-create" type="button">Create new account</button>
+            <div class="row">
+                <div class="col-xs-12" style="margin-top: 10px; text-align: center;">
+                    <img src="/static/cyoa/logo.svg" style="width: 60%; margin: 10px 0;">
+                </div>
             </div>
-        </script>
+            <div class="row">
+                <div class="col-xs-12" style="margin-top: 10px;">
+                    <form class="js-form-login">
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                            <input type="text" class="form-control js-input-username" placeholder="Username" required>
+                        </div>
 
-        <script type="text/template" id="template-create-account">
-            <div class="col-xs-12" style="margin-top: 10px;">
-                <form class="js-form-create-user">
-                    <input type="text" class="form-control js-input-username" placeholder="Username" required>
-                    <input type="password" class="form-control js-input-password" placeholder="Password" required>
-                    <button class="btn btn-primary" type="submit" style="width: 80px;" data-default="Submit">Submit</button>
-                    <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
-                </form>
+                        <div class="input-group">
+                            <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                            <input type="password" class="form-control js-input-password" placeholder="Password" required>
+                        </div>
+                        <button style="display: none;" type="submit"></button>
+                    </form>
 
-                <br>
-                <button class="btn btn-primary js-btn-cancel" type="button">Cancel</button>
+                    <div style="text-align: center;">
+                        <button class="btn js-btn-create" type="button">Create new account</button>
+                        <p class="or">
+                        or
+                        </p>
+                        <button class="btn js-btn-login" type="button">Login</button>
+                    </div>
+                </div>
             </div>
         </script>
 
@@ -261,7 +338,7 @@
                         <div class="form-group">
                             <input type="text" class="form-control" id="lastName" placeholder="Last Name" data-field="lastName" value="<%= lastName %>">
                         </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="submit" class="btn">Save Changes</button>
                         <!--
                             TODO: save button should always be "save changes" when view is loaded. changes to "saved" when clicked until another change is made
                         -->
@@ -273,9 +350,9 @@
         <script type="text/template" id="template-home">
             <div class="row" style="margin-top: 10px;">
                 <div class="col-xs-12">
-                    <button type="button" class="btn btn-primary btn-lg btn-block js-btn-new">Start New Adventure</button>
-                    <button type="button" class="btn btn-primary btn-lg btn-block js-btn-completed">History</button>
-                    <button type="button" class="btn btn-primary btn-lg btn-block js-btn-achievements">Achievements</button>
+                    <button type="button" class="btn btn-lg btn-block js-btn-new">Start New Adventure</button>
+                    <button type="button" class="btn btn-lg btn-block js-btn-completed">History</button>
+                    <button type="button" class="btn btn-lg btn-block js-btn-achievements">Achievements</button>
                 </div>
             </div>
         </script>
@@ -294,10 +371,9 @@
                             <div class="input-group">
                                 <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
                                 <span class="input-group-btn">
-                                    <button class="btn btn-primary" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
+                                    <button class="btn" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
                                 </span>
                             </div>
-                            <div class="alert alert-danger js-container-error-message" role="alert" style="display: none;"></div>
                         </form>
                     <% } else { %>
                     <% } %>
@@ -372,7 +448,7 @@
         <script type="text/template" id="template-adventure-options">
             <% if (canStartNextRoundOfVoting){ %>
                 <div class="js-container-start-next-activity-button">
-                    <button type="button" class="btn btn-primary js-btn-choose-activity-options">
+                    <button type="button" class="btn js-btn-choose-activity-options">
                         Choose Next Activity Options
                     </button>
                 </div>
@@ -388,7 +464,7 @@
                             -- activity type options will go here --
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Start Activity</button>
+                        <button type="submit" class="btn">Start Activity</button>
                     </form>
                 </div>
             <% } if (canEndAdventure) { %>

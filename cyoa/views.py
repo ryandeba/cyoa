@@ -87,7 +87,8 @@ def login_user(request):
     if user is not None:
         appUser, created = AppUser.objects.get_or_create(user=user)
         request.response["data"] = {
-            "token": str(appUser.id)
+            "username": username,
+            "token": str(appUser.id),
         }
         return
     request.response["success"] = False
@@ -98,8 +99,11 @@ def create_user(request):
         username= request.POST.get('username')
         password= request.POST.get('password')
 
-        user = User.objects.create_user(username=username, password=password)
-        appUser = AppUser.objects.create(user=user)
+        user = authenticate(username=username, password=password)
+        if user is None:
+            user = User.objects.create_user(username=username, password=password)
+
+        appUser, created = AppUser.objects.get_or_create(user=user)
         appUser.save()
 
         if user is not None:
