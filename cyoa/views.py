@@ -254,4 +254,4 @@ def end_adventure(request):
 
 @require_authentication
 def load_achievements(request):
-    return []
+    pass

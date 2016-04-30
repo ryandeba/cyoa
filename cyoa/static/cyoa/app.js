@@ -408,7 +408,7 @@ $(function(){
         },
 
         inviteUserSuccess: function(){
-            this.adventure.get("users").trigger("change");
+            this.adventure.get("users").trigger("change"); //triggering a change event to hide the invite user form
             this.loadAdventure();
         },
 
