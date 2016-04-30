@@ -1,4 +1,9 @@
 $(function(){
+    var viewportHeight = $(window).height();
+    $("body").css("min-height", viewportHeight);
+});
+
+$(function(){
 
     window.app = undefined;
 
@@ -171,7 +176,6 @@ $(function(){
 
             this.listenTo(this.vent, "login", this.login);
             this.listenTo(this.vent, "login:success", this.loginSuccess);
-            this.listenTo(this.vent, "login:failed", this.loginFailed);
 
             this.listenTo(this.vent, "createUser", this.createUser);
             this.listenTo(this.vent, "userCreated", this.userCreated);
@@ -321,10 +325,6 @@ $(function(){
 
         loginSuccess: function(data){
             this.loadAdventure();
-        },
-
-        loginFailed: function(data){
-            alert("TODO: handle login failure");
         },
 
         createUser: function(data){
@@ -632,6 +632,10 @@ $(function(){
     var LoginView = Marionette.ItemView.extend({
         template: "#template-login",
 
+        initialize: function(){
+            this.listenTo(app.vent, "login:failed", this.loginFailed);
+        },
+
         events: {
             "submit .js-form-login": "login",
             "click .js-btn-login": "login",
@@ -648,6 +652,14 @@ $(function(){
             $password.prop("disabled", true);
 
             app.vent.trigger("login", {username: $username.val(), password: $password.val()});
+        },
+
+        loginFailed: function(){
+            var $username = this.$el.find(".js-input-username");
+            var $password = this.$el.find(".js-input-password");
+
+            $username.prop("disabled", false);
+            $password.prop("disabled", false);
         },
 
         createNewAccount: function(){

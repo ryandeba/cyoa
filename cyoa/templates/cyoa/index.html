@@ -27,15 +27,16 @@
         <style>
             html, body {
                 height: 100%;
-            }
-            body {
-                padding-top: 60px;
 
                 background-color: #4fc0e8;
                 background-image: url("/static/cyoa/LoginScreen.svg");
                 background-size: 100%;
                 background-repeat: no-repeat;
-                background-position-y: 0%;
+                background-position: center bottom;
+
+            }
+            body {
+                padding-top: 60px;
 
                 font-size: 12px;
 
@@ -222,6 +223,10 @@
                     color: #fff;
                 }
 
+                .form-control[disabled] {
+                    background-color: #72cded;
+                }
+
             .input-group-addon {
                 background-color: #72cded;
 
@@ -330,7 +335,7 @@
                 <div class="col-xs-12">
                     <form class="js-form-profile">
                         <div class="form-group">
-                            <input type="text" class="form-control" id="email" placeholder="Email" data-field="email" value="<%= username %>" disabled>
+                            <input type="text" class="form-control" placeholder="Username" data-field="username" value="<%= username %>" disabled>
                         </div>
                         <div class="form-group">
                             <input type="email" class="form-control" id="email" placeholder="Email" data-field="email" value="<%= email %>">
