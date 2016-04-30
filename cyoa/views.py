@@ -36,6 +36,7 @@ def api(request, method):
         "start_next_activity": start_next_activity,
         "vote_activity": vote_activity,
         "end_adventure": end_adventure,
+        "load_completed_adventures": load_completed_adventures,
     }
 #    if request.method == "POST":
 #        request.user = AppUser.objects.get(id=request.POST.get("id")).user
@@ -139,6 +140,15 @@ def load_adventure(request):
     if adventure.date_finished is not None:
         adventure_data["isFinished"] = True
     return adventure_data
+
+def load_completed_adventures(request):
+    adventures = Adventure.objects.filter(adventureuser__user=request.user, date_finished__isnull=False)
+    return [
+        {
+            "id": adventure.id,
+            "name": adventure.name,
+        } for adventure in adventures
+    ]
 
 def invite_user(request): #load adventure data for the adventure that the user is in (if applicable)
     appUser = AppUser.objects.get(user__username=request.POST.get("username"))

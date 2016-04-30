@@ -120,7 +120,7 @@ $(function(){
         },
 
         canVoteOnNextActivity: function(){
-            return this.get("activities").currentRoundOfVotingHasEnded() == false;
+            return this.get("activities").length > 0 && this.get("activities").currentRoundOfVotingHasEnded() == false;
         },
 
         waitingOnHostToStartNextActivity: function(){
@@ -130,6 +130,10 @@ $(function(){
         canEndAdventure: function(){
             return this.get("isFinished") == false && this.userIsHost();
         }
+    });
+
+    var Adventures = Backbone.Collection.extend({
+        model: Adventure
     });
 
     var App = Backbone.Marionette.Application.extend({
@@ -142,6 +146,7 @@ $(function(){
                 this.user.set("password", localStorage.getItem("password"));
             };
             this.adventure = new Adventure();
+            this.completedAdventures = new Adventures();
 
             this.layoutView = new ApplicationLayoutView();
             this.layoutView.render();
@@ -171,6 +176,8 @@ $(function(){
             } else {
                 this.vent.trigger("showView", "login");
             };
+
+            this.loadCompletedAdventures();
         },
 
         showView: function(view){
@@ -206,6 +213,13 @@ $(function(){
                         self.layoutView.getRegion("main").show(new AdventureView({model: self.adventure}));
                     }
                     //TODO: do menu options go here? or maybe the menu's model should be set to self.adventure?
+                },
+                "completedAdventures": {
+                    titleHtml: "Completed Adventures",
+                    backButton: true,
+                    viewFunction: function(){
+                        self.layoutView.getRegion("main").show(new CompletedAdventuresView({collection: self.completedAdventures}));
+                    }
                 }
             };
 
@@ -418,6 +432,18 @@ $(function(){
                     self.vent.trigger("showView", "adventure");
                 }
             });
+        },
+
+        loadCompletedAdventures: function(){
+            var self = this;
+
+            $.ajax({
+                url: "/api/load_completed_adventures/",
+                success: function(data){
+                    console.log("loadCompletedAdventures", data);
+                    self.completedAdventures.set(data);
+                }
+            });
         }
     });
 
@@ -576,11 +602,16 @@ $(function(){
         template: "#template-home",
 
         events: {
-            "click .js-btn-new": "newAdventure"
+            "click .js-btn-new": "newAdventure",
+            "click .js-btn-completed": "completedAdventures"
         },
 
         newAdventure: function(){
             app.vent.trigger("showView", "adventure");
+        },
+
+        completedAdventures: function(){
+            app.vent.trigger("showView", "completedAdventures");
         }
     });
 
@@ -647,6 +678,27 @@ $(function(){
             this.$el.find(".js-btn-invite").addClass("cancel");
             this.$el.find(".js-label-invite").html("Cancel");
         }
+    });
+
+    var CompletedAdventureView = Marionette.ItemView.extend({
+        template: "#template-completed-adventure"
+    });
+
+    var CompletedAdventuresView = Marionette.CompositeView.extend({
+        template: "#template-completed-adventures",
+
+        childView: CompletedAdventureView,
+
+        childViewContainer: ".js-adventures"
+
+/*
+        serializeData: function(){
+            var data = this.model.toJSON();
+            data.canVoteOnNextActivity = this.model.canVoteOnNextActivity();
+            data.waitingOnHostToStartNextActivity = this.model.waitingOnHostToStartNextActivity();
+            return data;
+        }
+        */
     });
 
     var AdventureUserView = Marionette.ItemView.extend({
