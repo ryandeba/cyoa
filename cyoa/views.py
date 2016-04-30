@@ -1,5 +1,7 @@
 import sys
 
+from functools import wraps
+
 from django.core import serializers
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -12,7 +14,6 @@ from datetime import datetime
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
 
 from models import AppUser, Adventure, AdventureUser, Activity, AdventureActivity, AdventureActivityVote
 
@@ -25,7 +26,7 @@ def index(request):
 
 def api(request, method):
     methods = {
-        "is_logged_in": is_logged_in,
+        "validate_login": validate_login,
         "login": login_user,
         "create_user": create_user,
         "save_profile": save_profile,
@@ -39,13 +40,44 @@ def api(request, method):
         "end_adventure": end_adventure,
         "load_achievements": load_achievements,
     }
-#    if request.method == "POST":
-#        request.user = AppUser.objects.get(id=request.POST.get("id")).user
+    request.response = {
+        "success": True,
+        "error_message": "",
+        "data": {},
+    }
     responseData = methods[method](request)
-    return HttpResponse(json.dumps(responseData), content_type="application/json")
+    return HttpResponse(json.dumps(request.response), content_type="application/json")
 
-def is_logged_in(request):
-    return request.user.is_authenticated()
+def require_authentication(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+
+        request = args[0]
+        token = request.POST.get('token')
+        appUser = None
+        try:
+            appUser = AppUser.objects.get(id=token)
+            request.user = appUser.user
+        except:
+            request.response["success"] = False
+            request.response["error_message"] = "Authentication Error"
+            return
+
+        return f(*args, **kwargs)
+    return wrapper
+
+def validate_login(request):
+    token = request.POST.get('token')
+    appUser = None
+    try:
+        appUser = AppUser.objects.get(id=token)
+        request.response["data"] = {
+            "username": appUser.user.username
+        }
+    except:
+        pass
+    if appUser is None:
+        request.response["success"] = False
 
 def login_user(request):
     username = request.POST.get('username')
@@ -53,17 +85,20 @@ def login_user(request):
 
     user = authenticate(username=username, password=password)
     if user is not None:
-        login(request, user)
-        AppUser.objects.get_or_create(user=user)
-        return True
-    return False
+        appUser, created = AppUser.objects.get_or_create(user=user)
+        request.response["data"] = {
+            "token": str(appUser.id)
+        }
+        return
+    request.response["success"] = False
+    request.response["error_message"] = "Login Error"
 
 def create_user(request):
     try:
         username= request.POST.get('username')
+        password= request.POST.get('password')
 
         appUser = AppUser.objects.create()
-        password = appUser.id
 
         user = User.objects.create_user(username=username, password=password) #TODO: can I just save a user without a password?
         appUser.user = user
@@ -80,38 +115,51 @@ def create_user(request):
         pass
     return False
 
+@require_authentication
 def create_adventure(request):
-    adventure = Adventure.objects.create(name=request.POST.get("name"))
-    AdventureUser.objects.create(adventure=adventure, user=request.user, is_host=True)
-    return True
+    try:
+        adventure = Adventure.objects.create(name=request.POST.get("name"))
+        AdventureUser.objects.create(adventure=adventure, user=request.user, is_host=True)
+    except:
+        request.response["success"] = False
+        request.response["error_message"] = "An error occurred creating the adventure"
 
+@require_authentication
 def save_profile(request):
-    user = User.objects.get(username=request.POST.get("username"))
-    user.first_name = request.POST.get("firstName")
-    user.last_name = request.POST.get("lastName")
-    user.email = request.POST.get("email")
-    user.save()
-    return True
+    try:
+        request.user.first_name = request.POST.get("firstName")
+        request.user.last_name = request.POST.get("lastName")
+        request.user.email = request.POST.get("email")
+        request.user.save()
+    except:
+        request.response["success"] = False
+        request.response["error_message"] = "An error occurred saving profile data"
 
+@require_authentication
 def load_profile(request):
-    user = User.objects.get(username=request.GET.get("username"))
-    return {
-        "firstName": user.first_name,
-        "lastName": user.last_name,
-        "email": user.email,
+    request.response["data"] = {
+        "firstName": request.user.first_name,
+        "lastName": request.user.last_name,
+        "email": request.user.email,
     }
 
+@require_authentication
 def accept_adventure(request):
     return False
 
+@require_authentication
 def decline_adventure(request):
     return False
 
+@require_authentication
 def load_adventure(request):
+    request.response["data"] = {
+        "adventure_data": {}
+    }
     try:
         adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     except:
-        return {}
+        return
     adventure_data = {
         "name": adventure.name,
         "isFinished": False,
@@ -140,8 +188,11 @@ def load_adventure(request):
     }
     if adventure.date_finished is not None:
         adventure_data["isFinished"] = True
-    return adventure_data
+    request.response["data"] = {
+        "adventure_data": adventure_data
+    }
 
+@require_authentication
 def load_completed_adventures(request):
     adventures = Adventure.objects.filter(adventureuser__user=request.user, date_finished__isnull=False)
     return [
@@ -151,12 +202,17 @@ def load_completed_adventures(request):
         } for adventure in adventures
     ]
 
-def invite_user(request): #load adventure data for the adventure that the user is in (if applicable)
-    appUser = AppUser.objects.get(user__username=request.POST.get("username"))
-    adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
-    adventureUser, created = AdventureUser.objects.get_or_create(adventure=adventure, user=appUser.user)
-    return True
+@require_authentication
+def invite_user(request):
+    try:
+        appUser = AppUser.objects.get(user__username=request.POST.get("username"))
+        adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
+        adventureUser, created = AdventureUser.objects.get_or_create(adventure=adventure, user=appUser.user)
+    except:
+        request.response["success"] = False
+        request.response["error_message"] = "An error occurred inviting user"
 
+@require_authentication
 def start_next_activity(request):
     #TODO: use the filters/activity types posted to filter random choices. related - do we allow duplicates? what happens when you get to the end?
     adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
@@ -167,8 +223,7 @@ def start_next_activity(request):
     for activity in Activity.objects.order_by('?')[:3]:
         AdventureActivity.objects.create(adventure=adventure, activity=activity, group=max_group+1)
 
-    return True
-
+@require_authentication
 def vote_activity(request):
     adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     adventureActivity =  adventure.adventureactivity_set.get(id=request.POST.get("id"))
@@ -195,13 +250,12 @@ def vote_activity(request):
     if number_of_votes == adventure.adventureuser_set.count():
         adventure.choose_activity_for_group(group=adventureActivity.group)
 
-    return True
-
+@require_authentication
 def end_adventure(request):
     adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
     adventure.date_finished = datetime.now()
     adventure.save()
-    return True
 
+@require_authentication
 def load_achievements(request):
     return []

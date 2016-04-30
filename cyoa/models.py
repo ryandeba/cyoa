@@ -16,6 +16,7 @@ WEEKDAYS = [
 class AppUser(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, null=True)
+    #TODO: add reset code
 
     def __str__(self):
         return self.user.username

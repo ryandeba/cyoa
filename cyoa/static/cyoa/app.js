@@ -5,7 +5,7 @@ $(function(){
     var User = Backbone.Model.extend({
         defaults: {
             "username": "",
-            "password": "",
+            "token": "",
             "email": "",
             "firstName": "",
             "lastName": "",
@@ -107,7 +107,7 @@ $(function(){
         },
 
         userIsHost: function(){
-            return this.get("host") == localStorage.getItem("username");
+            return this.get("host") == app.user.get("username");
         },
 
         canStartNextRoundOfVoting: function(){
@@ -148,10 +148,16 @@ $(function(){
             app = this;
 
             this.user = new User();
+            if (localStorage.getItem("token") != null){
+                this.user.set("token", localStorage.getItem("token"));
+            };
+            this.listenTo(this.user, "change:token", function(){ localStorage.setItem("token", app.user.get("token")); });
+            /*
             if (localStorage.getItem("username") != null && localStorage.getItem("password") != null){
                 this.user.set("username", localStorage.getItem("username"));
                 this.user.set("password", localStorage.getItem("password"));
             };
+            */
             this.adventure = new Adventure();
             this.completedAdventures = new Adventures();
             this.achievements = new Achievements();
@@ -162,30 +168,49 @@ $(function(){
             this.layoutView.getRegion("header").show(new HeaderView());
             this.layoutView.getRegion("menu").show(new MenuView());
 
+            this.listenTo(this.vent, "validateLogin:success", this.loadAdventure);
+            this.listenTo(this.vent, "validateLogin:failed", function(){ app.showView("login"); });
+
             this.listenTo(this.vent, "login", this.login);
             this.listenTo(this.vent, "login:success", this.loginSuccess);
+            this.listenTo(this.vent, "login:failed", this.loginFailed);
 
             this.listenTo(this.vent, "createUser", this.createUser);
             this.listenTo(this.vent, "userCreated", this.userCreated);
 
             this.listenTo(this.vent, "createAdventure", this.createAdventure);
             this.listenTo(this.vent, "adventureCreated", this.adventureCreated);
+
             this.listenTo(this.vent, "inviteUser", this.inviteUser);
+            this.listenTo(this.vent, "invite:success", this.loadAdventure);
+
             this.listenTo(this.vent, "startNextActivity", this.startNextActivity);
+            this.listenTo(this.vent, "startNextActivity:success", this.loadAdventure);
+
             this.listenTo(this.vent, "submitVote", this.submitVote);
+            this.listenTo(this.vent, "submitVote:success", this.loadAdventure);
+
             this.listenTo(this.vent, "endAdventure", this.endAdventure);
+            this.listenTo(this.vent, "endAdventure:success", this.loadAdventure);
 
             this.listenTo(this.vent, "saveProfile", this.saveProfile);
 
             this.listenTo(this.vent, "showView", this.showView);
 
-            if (this.user.get("username").length > 0 && this.user.get("password").length > 0){
-                this.login({username: localStorage.getItem("username"), password: localStorage.getItem("password")});
+            this.vent.trigger("showView", "loading");
+
+            this.validateLogin();
+
+/*
+            if (this.user.get("username").length > 0 && this.user.get("password").length > 0 && false){
+                this.login({username: this.user.get("username"), password: this.user.get("password")});
             } else {
                 this.vent.trigger("showView", "login");
             };
 
             this.loadCompletedAdventures();
+            this.loadAchievements();
+*/
         },
 
         showView: function(view){
@@ -196,6 +221,11 @@ $(function(){
             };
 
             var views = {
+                "loading": {
+                    titleHtml: 'Loading...',
+                    backButton: false,
+                    viewFunction: function(){ self.layoutView.getRegion("main").show(new LoadingView()) }
+                },
                 "login": {
                     titleHtml: '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>',
                     backButton: false,
@@ -242,23 +272,25 @@ $(function(){
             this.vent.trigger("viewChanged", views[view]);
         },
 
-/*
-        isLoggedIn: function(){
+        validateLogin: function(){
             var self = this;
 
-            var result = false;
-
             $.ajax({
-                url: "/api/is_logged_in/",
+                url: "/api/validate_login/",
                 type: "POST",
+                data: {
+                    token: app.user.get("token")
+                },
                 success: function(response){
-                    result = response;
+                    if (response.success){
+                        self.user.set("username", response.data.username);
+                        self.vent.trigger("validateLogin:success");
+                    } else {
+                        self.vent.trigger("validateLogin:failed");
+                    };
                 }
             });
-
-            return result;
         },
-*/
 
         login: function(data){
             var self = this;
@@ -271,8 +303,10 @@ $(function(){
                     password: data.password
                 },
                 success: function(response){
-                    if (response){
-                        self.vent.trigger("login:success", data);
+                    console.log(response);
+                    if (response.success){
+                        app.user.set("token", response.data.token)
+                        self.vent.trigger("login:success");
                     } else {
                         self.vent.trigger("login:failed");
                     };
@@ -281,13 +315,15 @@ $(function(){
         },
 
         loginSuccess: function(data){
-            localStorage.setItem("username", data.username);
-            localStorage.setItem("password", data.password);
-
             this.loadAdventure();
         },
 
+        loginFailed: function(data){
+            alert("TODO: handle login failure");
+        },
+
         createUser: function(data){
+            /*
             var self = this;
 
             $.ajax({
@@ -304,6 +340,7 @@ $(function(){
                     };
                 }
             });
+            */
         },
 
         createAdventure: function(data){
@@ -313,11 +350,12 @@ $(function(){
                 url: "/api/create_adventure/",
                 type: "POST",
                 data: {
+                    token: app.user.get("token"),
                     name: data.name
                 },
                 success: function(response){
-                    if (response){
-                        self.vent.trigger("adventureCreated", data);
+                    if (response.success){
+                        self.vent.trigger("adventureCreated");
                     } else {
                         //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
                     };
@@ -332,7 +370,7 @@ $(function(){
         },
 
         adventureCreated: function(data){
-            this.adventure.set("name", data.name);
+            this.loadAdventure();
         },
 
         inviteUser: function(data){
@@ -342,11 +380,12 @@ $(function(){
                 url: "/api/invite_user/",
                 type: "POST",
                 data: {
+                    token: app.user.get("token"),
                     username: data.username
                 },
                 success: function(response){
-                    if (response){
-                        self.vent.trigger("invite:success", {username: data.username});
+                    if (response.success){
+                        self.vent.trigger("invite:success");
                     } else {
                         //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
                     };
@@ -359,17 +398,13 @@ $(function(){
                 url: "/api/start_next_activity/",
                 type: "POST",
                 data: {
-                    //TODO
+                    token: app.user.get("token")
+                    //TODO: add location/activity type options
                 },
                 success: function(response){
-                    console.log(response);
-                    /*
-                    if (response){
-                        self.vent.trigger("invite:success", {username: data.username});
-                    } else {
-                        //self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
+                    if (response.success){
+                        app.vent.trigger("startNextActivity:success");
                     };
-                    */
                 }
             });
         },
@@ -379,10 +414,13 @@ $(function(){
                 url: "/api/vote_activity/",
                 type: "POST",
                 data: {
+                    token: app.user.get("token"),
                     id: data.id
                 },
                 success: function(response){
-                    console.log(response);
+                    if (response.success){
+                        app.vent.trigger("submitVote:success");
+                    };
                 }
             });
         },
@@ -390,8 +428,14 @@ $(function(){
         endAdventure: function(){
             $.ajax({
                 url: "/api/end_adventure/",
+                type: "POST",
+                data: {
+                    token: app.user.get("token"),
+                },
                 success: function(response){
-                    console.log("End Adventure", response);
+                    if (response.success){
+                        app.vent.trigger("endAdventure:success");
+                    };
                 }
             });
         },
@@ -418,11 +462,14 @@ $(function(){
 
             $.ajax({
                 url: "/api/load_profile/",
-                data: {username: self.user.get("username")},
-                success: function(data){
-                    self.user.set("firstName", data.firstName);
-                    self.user.set("lastName", data.lastName);
-                    self.user.set("email", data.email);
+                type: "POST",
+                data: {
+                    token: app.user.get("token")
+                },
+                success: function(response){
+                    self.user.set("firstName", response.data.firstName);
+                    self.user.set("lastName", response.data.lastName);
+                    self.user.set("email", response.data.email);
                 }
             });
         },
@@ -432,17 +479,22 @@ $(function(){
 
             $.ajax({
                 url: "/api/load_adventure/",
-                success: function(data){
-                    if (JSON.stringify(data) == "{}"){
+                type: "POST",
+                data: {
+                    token: app.user.get("token")
+                },
+                success: function(response){
+                    if (JSON.stringify(response.data.adventure_data) == "{}"){
+                        self.adventure.set(self.adventure.defaults);
                         self.vent.trigger("showView", "home");
                         return;
                     };
-                    self.adventure.set({name: data.name});
-                    self.adventure.set({host: data.host});
-                    self.adventure.set({isFinished: data.isFinished});
+                    self.adventure.set({name: response.data.adventure_data.name});
+                    self.adventure.set({host: response.data.adventure_data.host});
+                    self.adventure.set({isFinished: response.data.adventure_data.isFinished});
 
-                    self.adventure.get("users").set(data.users);
-                    self.adventure.get("activities").set(data.activities);
+                    self.adventure.get("users").set(response.data.adventure_data.users);
+                    self.adventure.get("activities").set(response.data.adventure_data.activities);
 
                     self.vent.trigger("showView", "adventure");
                 }
@@ -459,7 +511,19 @@ $(function(){
                     self.completedAdventures.set(data);
                 }
             });
+        },
+
+        loadAchievements: function(){
+            var self = this;
+
+            $.ajax({
+                url: "/api/load_achievements/",
+                success: function(data){
+                    self.achievements.set(data);
+                }
+            });
         }
+
     });
 
     var ApplicationLayoutView = Marionette.LayoutView.extend({
@@ -544,6 +608,10 @@ $(function(){
             this.$el.parent().removeClass("collapsed");
         }
 
+    });
+
+    var LoadingView = Marionette.ItemView.extend({
+        template: "#template-noop"
     });
 
     var LoginView = Marionette.ItemView.extend({
