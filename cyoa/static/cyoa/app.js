@@ -333,7 +333,7 @@ $(function(){
         },
 
         loginFailed: function(data){
-            this.vent.trigger("error", "Login failed");
+            this.vent.trigger("error", "Invalid username or password");
         },
 
         createUser: function(data){
@@ -350,9 +350,9 @@ $(function(){
                     if (response.success){
                         self.user.set("username", response.data.username);
                         self.user.set("token", response.data.token);
-                        self.vent.trigger("createUser:success", data);
+                        self.vent.trigger("createUser:success");
                     } else {
-                        self.vent.trigger("createUser:failed", {errorMessage: data.errorMessage});
+                        self.vent.trigger("createUser:failed", {errorMessage: response.error_message});
                     };
                 }
             });
@@ -378,13 +378,11 @@ $(function(){
         },
 
         createUserSuccess: function(data){
-            this.user.set("username", data.username);
-            this.user.set("id", data.id);
             this.vent.trigger("showView", "profile");
         },
 
         createUserFailed: function(data){
-            this.vent.trigger("error", "Account creation failed");
+            this.vent.trigger("error", data.errorMessage);
         },
 
         adventureCreated: function(data){
