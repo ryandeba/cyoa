@@ -137,8 +137,8 @@
             }
 
             #region-menu {
-                background-color: #95a5a6;
-                box-shadow: #000 2px 0px 5px;
+                background-color: #4fc0e8;
+                box-shadow: #000 0px 0px 5px;
 
                 height: 100%;
                 width: 200px;
@@ -153,15 +153,30 @@
             }
 
             #region-menu.collapsed {
-                left: -200px;
+                left: -210px;
             }
 
             #region-menu button {
                 border-radius: 0;
+                border: none;
+
                 display: block;
+
+                font-size: 14px;
+
+                padding: 16px;
+
                 text-align: left;
+
                 width: 100%;
             }
+                #region-menu button:hover {
+                    background-color: #4b89dc;
+                }
+
+                #region-menu button .fa {
+                    margin-right: 10px;
+                }
 
             #region-error {
                 background-color: red;
@@ -195,9 +210,16 @@
             }
 
             /* bootstrap customizations */
+            .navbar {
+                min-height: 0;
+            }
+
             .navbar-toggle {
                 display: inline-block;
                 float: none;
+            }
+            .navbar-toggle:hover {
+                background-color: initial !important;
             }
 
             .navbar-brand {
@@ -216,17 +238,23 @@
                 margin-left: 0;
             }
 
+           .navbar-toggle,
            .navbar-back {
-                position: relative;
-                margin-right: 15px;
-                padding: 5px 10px;
-                margin-top: 13px;
-                margin-bottom: 13px;
                 background-color: transparent;
                 background-image: none;
-                border: 1px solid #1a242f;
+
+                border: none;
                 border-radius: 4px;
+
                 color: #fff;
+
+                font-size: 18px;
+
+                position: relative;
+
+                padding: 5px 10px;
+
+                margin: 5px 5px 5px 0;
             }
 
             .input-group {
@@ -305,9 +333,7 @@
                 <div class="navbar-header">
                     <button type="button" class="navbar-back" style="display: none;"><i class="fa fa-arrow-left"></i></button>
                     <button type="button" class="navbar-toggle">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
+                        <i class="fa fa-bars"></i>
                     </button>
                     <span class="navbar-brand">
                         <span style="font-weight: bold;">Adventur</span><span style="font-weight: normal">Us</span>
@@ -317,8 +343,10 @@
         </script>
 
         <script type="text/template" id="template-menu">
-            <button type="button" class="btn btn-default" data-view="profile">Profile</button>
-            <button type="button" class="btn btn-default" data-view="invite">Invite</button>
+            <button type="button" class="btn btn-default" data-view="profile">
+                <i class="fa fa-user"></i>
+                Profile
+            </button>
         </script>
 
         <script type="text/template" id="template-login">
