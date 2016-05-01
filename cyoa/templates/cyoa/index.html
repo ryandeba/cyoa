@@ -33,7 +33,6 @@
                 background-size: 100%;
                 background-repeat: no-repeat;
                 background-position: center bottom;
-
             }
             body {
                 padding-top: 60px;
@@ -164,6 +163,36 @@
                 width: 100%;
             }
 
+            #region-error {
+                background-color: red;
+
+                position: absolute;
+                top: 20px;
+
+                padding: 8px;
+                width: 100%;
+
+                transition: all 0.3s;
+
+                z-index: 100;
+            }
+            #region-error.visible {
+                top: 60px;
+            }
+
+            p.or:before,
+            p.or:after {
+                content: "";
+                border-bottom: 1px solid #fff;
+                width: 20px;
+                height: 1px;
+                display: inline-block;
+                position: relative;
+                bottom: 3px;
+            }
+            p.or {
+                margin: 8px 0 4px 0;
+            }
 
             /* bootstrap customizations */
             .navbar-toggle {
@@ -254,19 +283,12 @@
                 clear: both;
             }
 
-            p.or:before,
-            p.or:after {
-                content: "";
-                border-bottom: 1px solid #fff;
-                width: 20px;
-                height: 1px;
-                display: inline-block;
-                position: relative;
-                bottom: 3px;
+            .alert {
+                padding: 8px;
+                border-radius: 100px;
+                margin: 0;
             }
-            p.or {
-                margin: 8px 0 4px 0;
-            }
+
         </style>
 
         <script type="text/template" id="template-noop"></script>
@@ -274,6 +296,7 @@
         <script type="text/template" id="template-application">
             <nav id="region-header" class="navbar navbar-default navbar-fixed-top"></nav>
             <nav id="region-menu" class="collapsed"></nav>
+            <div id="region-error"></div>
             <div class="container" id="region-main"></div>
         </script>
 
@@ -307,6 +330,7 @@
             <div class="row">
                 <div class="col-xs-12" style="margin-top: 10px;">
                     <form class="js-form-login">
+                        <input type="hidden" class="js-input-login-type" value="login">
                         <div class="input-group">
                             <span class="input-group-addon"><i class="fa fa-user"></i></span>
                             <input type="text" class="form-control js-input-username" placeholder="Username" required>

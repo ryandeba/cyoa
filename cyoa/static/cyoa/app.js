@@ -152,6 +152,8 @@ $(function(){
         initialize: function(options) {
             app = this;
 
+            //TODO: move all of the view stuff into ApplicationLayoutView
+
             this.user = new User();
             if (localStorage.getItem("token") != null){
                 this.user.set("token", localStorage.getItem("token"));
@@ -170,15 +172,18 @@ $(function(){
 
             this.layoutView.getRegion("header").show(new HeaderView());
             this.layoutView.getRegion("menu").show(new MenuView());
+            this.layoutView.getRegion("error").show(new ErrorView());
 
             this.listenTo(this.vent, "validateLogin:success", this.loadAdventure);
             this.listenTo(this.vent, "validateLogin:failed", function(){ app.showView("login"); });
 
             this.listenTo(this.vent, "login", this.login);
             this.listenTo(this.vent, "login:success", this.loginSuccess);
+            this.listenTo(this.vent, "login:failed", this.loginFailed);
 
             this.listenTo(this.vent, "createUser", this.createUser);
-            this.listenTo(this.vent, "userCreated", this.userCreated);
+            this.listenTo(this.vent, "createUser:success", this.createUserSuccess);
+            this.listenTo(this.vent, "createUser:failed", this.createUserFailed);
 
             this.listenTo(this.vent, "createAdventure", this.createAdventure);
             this.listenTo(this.vent, "adventureCreated", this.adventureCreated);
@@ -327,6 +332,10 @@ $(function(){
             this.loadAdventure();
         },
 
+        loginFailed: function(data){
+            this.vent.trigger("error", "Login failed");
+        },
+
         createUser: function(data){
             var self = this;
 
@@ -341,9 +350,9 @@ $(function(){
                     if (response.success){
                         self.user.set("username", response.data.username);
                         self.user.set("token", response.data.token);
-                        self.vent.trigger("userCreated", data);
+                        self.vent.trigger("createUser:success", data);
                     } else {
-                        self.vent.trigger("userCreatedFailed", {errorMessage: data.errorMessage});
+                        self.vent.trigger("createUser:failed", {errorMessage: data.errorMessage});
                     };
                 }
             });
@@ -368,10 +377,14 @@ $(function(){
             });
         },
 
-        userCreated: function(data){
+        createUserSuccess: function(data){
             this.user.set("username", data.username);
             this.user.set("id", data.id);
             this.vent.trigger("showView", "profile");
+        },
+
+        createUserFailed: function(data){
+            this.vent.trigger("error", "Account creation failed");
         },
 
         adventureCreated: function(data){
@@ -555,6 +568,7 @@ $(function(){
         regions: {
             header: "#region-header",
             menu: "#region-menu",
+            error: "#region-error",
             main: "#region-main"
         },
 
@@ -625,6 +639,28 @@ $(function(){
 
     });
 
+    var ErrorView = Marionette.ItemView.extend({
+        template: "#template-noop",
+
+        initialize: function(){
+            this.hideErrorTimeout = undefined;
+
+            this.listenTo(app.vent, "error", this.showError);
+        },
+
+        showError: function(errorMessage){
+            //TODO: figure out what we're doing about errors and then fix this mess
+
+            this.$el.html(errorMessage);
+            $("#region-error").addClass("visible");
+
+            clearTimeout(this.hideErrorTimeout);
+            this.hideErrorTimeout = setTimeout(function(){
+                $("#region-error").removeClass("visible");
+            }, 3000);
+        }
+    });
+
     var LoadingView = Marionette.ItemView.extend({
         template: "#template-noop"
     });
@@ -633,16 +669,27 @@ $(function(){
         template: "#template-login",
 
         initialize: function(){
-            this.listenTo(app.vent, "login:failed", this.loginFailed);
+            this.listenTo(app.vent, "login:failed", this.enableForm);
+            this.listenTo(app.vent, "createUser:failed", this.enableForm);
         },
 
         events: {
-            "submit .js-form-login": "login",
+            "submit .js-form-login": "submitLogin",
             "click .js-btn-login": "login",
             "click .js-btn-create": "createNewAccount"
         },
 
-        login: function(e){
+        login: function(){
+            this.$el.find(".js-input-login-type").val("login");
+            this.$el.find("form").submit();
+        },
+
+        createNewAccount: function(){
+            this.$el.find(".js-input-login-type").val("create");
+            this.$el.find("form").submit();
+        },
+
+        submitLogin: function(e){
             e.preventDefault();
 
             var $username = this.$el.find(".js-input-username");
@@ -651,22 +698,22 @@ $(function(){
             $username.prop("disabled", true);
             $password.prop("disabled", true);
 
-            app.vent.trigger("login", {username: $username.val(), password: $password.val()});
+            if (this.$el.find(".js-input-login-type").val() == "login"){
+                app.vent.trigger("login", {username: $username.val(), password: $password.val()});
+            } else {
+                app.vent.trigger("createUser", {
+                    username: $username.val(),
+                    password: $password.val()
+                });
+            }
         },
 
-        loginFailed: function(){
+        enableForm: function(){
             var $username = this.$el.find(".js-input-username");
             var $password = this.$el.find(".js-input-password");
 
             $username.prop("disabled", false);
             $password.prop("disabled", false);
-        },
-
-        createNewAccount: function(){
-            app.vent.trigger("createUser", {
-                username: this.$el.find(".js-input-username").val(),
-                password: this.$el.find(".js-input-password").val()
-            });
         }
     });
 
