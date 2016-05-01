@@ -712,11 +712,11 @@ $(function(){
             $password.prop("disabled", true);
 
             if (this.$el.find(".js-input-login-type").val() == "login"){
-                app.vent.trigger("login", {username: $username.val(), password: $password.val()});
+                app.vent.trigger("login", {username: $.trim($username.val()), password: $.trim($password.val())});
             } else {
                 app.vent.trigger("createUser", {
-                    username: $username.val(),
-                    password: $password.val()
+                    username: $.trim($username.val()),
+                    password: $.trim($password.val())
                 });
             }
         },
