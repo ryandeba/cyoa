@@ -234,7 +234,7 @@ $(function(){
                 return;
             };
 
-            var defaultTitleHtml = '<span style="font-weight: normal;">adventur</span><span style="font-weight: bold">US</span>';
+            var defaultTitleHtml = '<img src="/static/cyoa/logo_text.svg" style="display: inline-block; width: 110px; padding-bottom: 4px;">';
             var views = {
                 "loading": {
                     titleHtml: 'Loading...',
@@ -596,7 +596,6 @@ $(function(){
 
         viewChanged: function(data){
             this.$el.find(".navbar-brand").html(data.titleHtml);
-
             this.$el.find(".navbar-toggle").toggle(!data.backButton);
             this.$el.find(".navbar-back").toggle(data.backButton);
         },
