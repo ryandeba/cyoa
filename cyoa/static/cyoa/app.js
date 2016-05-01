@@ -103,6 +103,7 @@ $(function(){
     var Adventure = Backbone.Model.extend({
         defaults: {
             name: "",
+            host: "",
             isFinished: false
         },
 
@@ -112,7 +113,7 @@ $(function(){
         },
 
         userIsHost: function(){
-            return this.get("host") == app.user.get("username");
+            return this.get("host") == app.user.get("username") || this.get("host") == "";
         },
 
         canStartNextRoundOfVoting: function(){
@@ -204,6 +205,8 @@ $(function(){
 
             this.listenTo(this.vent, "showView", this.showView);
 
+            this.listenTo(this.vent, "action", this.takeAction);
+
             this.vent.trigger("showView", "loading");
 
             this.validateLogin();
@@ -262,7 +265,7 @@ $(function(){
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AdventureLayoutView({model: self.adventure}));
                     }
-                    //TODO: do menu options go here? or maybe the menu's model should be set to self.adventure?
+                    //TODO: do menu options go here? or maybe the menu's model should be set to self.adventure? or self!
                 },
                 "completedAdventures": {
                     titleHtml: "Completed Adventures",
@@ -283,6 +286,13 @@ $(function(){
             views[view].viewFunction();
             this.currentView = view;
             this.vent.trigger("viewChanged", views[view]);
+        },
+
+        takeAction: function(action){
+            if (action == "logout"){
+                localStorage.clear();
+                window.location.href = window.location.href;
+            };
         },
 
         validateLogin: function(){
@@ -620,7 +630,12 @@ $(function(){
         selectMenuOption: function(e){
             e.preventDefault();
             var $el = $(e.target);
-            app.vent.trigger("showView", $el.data("view"));
+            if ($el.data("view") != undefined){
+                app.vent.trigger("showView", $el.data("view"));
+            }
+            if ($el.data("action") != undefined){
+                app.vent.trigger("action", $el.data("action"));
+            }
         },
 
         menuClicked: function(e){
@@ -766,23 +781,18 @@ $(function(){
 
             this.listenTo(this.model, "change", this.render);
             this.listenTo(this.model.get("users"), "change", this.hideInviteForm);
-            this.listenTo(app.vent, "adventureInviteView:input_not_empty", this.enableInviteUser);
-            this.listenTo(app.vent, "adventureInviteView:input_empty", this.disableInviteUser);
-
-            setTimeout(function(){ //TODO: is there a better way to do this?
-                self.getRegion("users").show(new AdventureUsersView({collection: self.model.get("users")}));
-                //self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
-                self.getRegion("activities").show(new ActivitiesLayoutView({model: self.model}));
-                self.getRegion("opts").show(new AdventureOptionsView({model: self.model}));
-
-                if (!self.model.userIsHost()){
-                    self.$el.find(".js-btn-invite").hide();
-                };
-
-            }, 0);
         },
 
         onRender: function(){
+            var self = this;
+
+            if (self.model.get("name").length > 0){
+                self.getRegion("users").show(new AdventureUsersView({model: self.model, collection: self.model.get("users")}));
+                //self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
+                self.getRegion("activities").show(new ActivitiesLayoutView({model: self.model}));
+                self.getRegion("opts").show(new AdventureOptionsView({model: self.model}));
+            };
+
             console.log("render AdventureLayoutView");
         },
 
@@ -795,38 +805,12 @@ $(function(){
         },
 
         events: {
-            "submit .js-form-adventure-name": "saveAdventureName",
-            "click .js-btn-invite": "showInviteForm"
+            "submit .js-form-adventure-name": "saveAdventureName"
         },
 
         saveAdventureName: function(e){
             e.preventDefault();
             app.vent.trigger("createAdventure", {name: this.$el.find(".js-input-adventure-name").val()});
-        },
-
-        showInviteForm: function(e){
-            var $el = $(e.target);
-            if ($el.hasClass("cancel")){
-                this.hideInviteForm();
-            } else {
-                this.getRegion("users").show(new AdventureUserInviteView());
-                this.disableInviteUser();
-            };
-        },
-
-        hideInviteForm: function(){
-            this.getRegion("users").show(new AdventureUsersView({collection: app.adventure.get("users")}));
-            this.enableInviteUser();
-        },
-
-        enableInviteUser: function(){
-            this.$el.find(".js-btn-invite").removeClass("cancel");
-            this.$el.find(".js-label-invite").html("Invite");
-        },
-
-        disableInviteUser: function(){
-            this.$el.find(".js-btn-invite").addClass("cancel");
-            this.$el.find(".js-label-invite").html("Cancel");
         }
     });
 
@@ -850,24 +834,33 @@ $(function(){
         }
     });
 
-    var AdventureUsersView = Marionette.CollectionView.extend({
+    var AdventureUsersView = Marionette.CompositeView.extend({
+        template: "#template-adventure-users",
+
         childView:  AdventureUserView,
 
-        initialize: function(){
-            this.listenTo(this.collection, "change", this.render);
-        }
-    });
-
-    var AdventureUserInviteView = Marionette.ItemView.extend({
-        template: "#template-adventure-invite",
-
-        attributes: {
-            "style": "float: left; margin-top: 12px; width: calc(100% - 80px);"
-        },
+        childViewContainer:  ".js-container-adventure-users",
 
         events: {
             "submit form": "inviteUser",
-            "input input": "inputChanged"
+            "click .js-btn-invite": "toggleInviteForm"
+        },
+
+        initialize: function(){
+            this.showInviteForm = false;
+            this.listenTo(this.collection, "change", this.render);
+            this.listenTo(app.vent, "inviteUser:success", this.toggleInviteForm);
+        },
+
+        serializeData: function(){
+            var data = this.model.toJSON();
+            data.userIsHost = this.model.userIsHost();
+            data.showInviteForm = this.showInviteForm;
+            return data;
+        },
+
+        onRender: function(){
+            this.$el.find(this.childViewContainer).toggle(!this.showInviteForm);
         },
 
         inviteUser: function(e){
@@ -878,13 +871,10 @@ $(function(){
             app.vent.trigger("inviteUser", {username: this.$el.find(".js-input-username").val()});
         },
 
-        inputChanged: function(e){
-            var $el = $(e.target);
-            if ($el.val().length > 0){
-                app.vent.trigger("adventureInviteView:input_not_empty");
-            } else {
-                app.vent.trigger("adventureInviteView:input_empty");
-            }
+        toggleInviteForm: function(show){
+            show = show == undefined ? !this.showInviteForm : show;
+            this.showInviteForm = show;
+            this.render();
         }
     });
 

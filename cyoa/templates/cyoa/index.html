@@ -45,11 +45,11 @@
             .container-adventure-users {
                 background-color: #eee;
 
-                margin: 0 -10px;
+                margin: 0 -15px;
                 padding: 10px;
 
                 height: 100px;
-                width: calc(100% + 25px);
+                width: calc(100% + 30px);
             }
 
             .adventure-user {
@@ -137,7 +137,7 @@
             }
 
             #region-menu {
-                background-color: #4fc0e8;
+                background-color: #252946;
                 box-shadow: #000 0px 0px 5px;
 
                 height: 100%;
@@ -179,10 +179,10 @@
                 }
 
             #region-error {
-                background-color: red;
+                background-color: #e74c3c;
 
                 position: absolute;
-                top: 20px;
+                top: 10px;
 
                 padding: 8px;
                 width: 100%;
@@ -192,7 +192,11 @@
                 z-index: 100;
             }
             #region-error.visible {
-                top: 60px;
+                top: 45px;
+            }
+
+            #region-adventure-users {
+                height: 100px;
             }
 
             p.or:before,
@@ -347,6 +351,10 @@
                 <i class="fa fa-user"></i>
                 Profile
             </button>
+            <button type="button" class="btn btn-default" data-action="logout">
+                <i class="fa fa-sign-out"></i>
+                Log out
+            </button>
         </script>
 
         <script type="text/template" id="template-login">
@@ -425,37 +433,40 @@
         -->
         <script type="text/template" id="template-adventure">
             <div class="row">
-                <div class="col-xs-12">
-                    <% if (name.length == 0){ %>
-                        <form class="js-form-adventure-name">
+                <% if (name.length == 0){ %>
+                    <form class="js-form-adventure-name">
+                        <div class="col-xs-9">
                             <div class="input-group">
+                                <span class="input-group-addon"><i class="fa fa-map"></i></span>
                                 <input type="text" class="form-control js-input-adventure-name" placeholder="Enter Adventure Title" required>
-                                <span class="input-group-btn">
-                                    <button class="btn" type="submit" style="width: 80px;" data-default="Go!">Go!</button>
-                                </span>
                             </div>
-                        </form>
-                    <% } else { %>
-                    <% } %>
-                </div>
+                        </div>
+                        <div class="col-xs-3">
+                            <button class="btn" type="submit">Go!</button>
+                        </div>
+                    </form>
+                <% } else { %>
+                <% } %>
             </div>
 
-            <div class="container-adventure-users">
-                <div class="adventure-user invite js-btn-invite">
+            <div id="region-adventure-users"></div>
+            <div id="region-adventure-activities" style="clear: both;"></div>
+            <div id="region-adventure-options" style="clear: both;"></div>
+        </script>
+
+        <script type="text/template" id="template-adventure-users">
+            <% if (userIsHost){ %>
+                <div class="adventure-user invite js-btn-invite <% if (showInviteForm){ %>cancel<% } %>">
                     <i class="fa fa-plus"></i>
                     <span class="adventure-user-username js-label-invite">Invite</span>
                 </div>
-                <div id="region-adventure-users"></div>
-            </div>
-
-            <div id="region-adventure-activities"></div>
-            <div id="region-adventure-options"></div>
-        </script>
-
-        <script type="text/template" id="template-adventure-invite">
-            <form>
-                <input type="text" class="form-control js-input-username" placeholder="Enter username" required>
-            </form>
+                <% if (showInviteForm){ %>
+                    <form style="float: left; margin-top: 12px; width: calc(100% - 80px)">
+                        <input type="text" class="form-control js-input-username" placeholder="Enter username" required>
+                    </form>
+                <% } %>
+            <% } %>
+            <div class="js-container-adventure-users"></div>
         </script>
 
         <script type="text/template" id="template-adventure-user">
@@ -496,57 +507,65 @@
         </script>
 
         <script type="text/template" id="template-adventure-activities-vote">
-            <% if (canVoteOnNextActivity){ %>
-                <strong>Time to vote!</strong>
-                <small>Tap one of the activities below to cast your vote</small>
-            <% } else if (waitingOnHostToStartNextActivity){ %>
-                -- waiting on host --
-            <% } %>
-            <div class="js-activities"></div>
+            <div class="row">
+                <div class="col-xs-12">
+                    <% if (canVoteOnNextActivity){ %>
+                        <strong>Time to vote!</strong>
+                        <small>Tap one of the activities below to cast your vote</small>
+                    <% } else if (waitingOnHostToStartNextActivity){ %>
+                        -- waiting on host --
+                    <% } %>
+                    <div class="js-activities"></div>
+                </div>
+            </div>
         </script>
 
         <script type="text/template" id="template-adventure-options">
-            <% if (canStartNextRoundOfVoting){ %>
-                <div class="js-container-start-next-activity-button">
-                    <button type="button" class="btn js-btn-choose-activity-options">
-                        Choose Next Activity Options
-                    </button>
-                </div>
-                <div class="js-container-start-next-activity-options" style="display: none;">
-                    <form style="clear: both; padding-top: 10px;">
-                        <h3>Locations</h3>
-                        <div id="region-locations">
-                            -- location options will go here --
+            <div class="row">
+                <div class="col-xs-12">
+                    <% if (canStartNextRoundOfVoting){ %>
+                        <div class="js-container-start-next-activity-button">
+                            <button type="button" class="btn js-btn-choose-activity-options">
+                                Choose Next Activity Options
+                            </button>
                         </div>
+                        <div class="js-container-start-next-activity-options" style="display: none;">
+                            <form style="clear: both; padding-top: 10px;">
+                                <h3>Locations</h3>
+                                <div id="region-locations">
+                                    -- location options will go here --
+                                </div>
 
-                        <h3>Activity Types</h3>
-                        <div id="region-locations">
-                            -- activity type options will go here --
+                                <h3>Activity Types</h3>
+                                <div id="region-locations">
+                                    -- activity type options will go here --
+                                </div>
+
+                                <button type="submit" class="btn">Start Activity</button>
+                            </form>
                         </div>
-
-                        <button type="submit" class="btn">Start Activity</button>
-                    </form>
+                    <% } if (canEndAdventure) { %>
+                        <div class="js-container-end-adventure-button">
+                            <button type="button" class="btn btn-danger js-btn-end-adventure">
+                                End Adventure
+                            </button>
+                        </div>
+                        <div class="js-container-end-adventure-confirm" style="display: none;">
+                            <p>
+                                Are you sure you want to end the adventure?
+                            </p>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-danger js-btn-end-adventure-confirm">
+                                    Yes
+                                </button>
+                                <button type="button" class="btn btn-default js-btn-end-adventure-cancel">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    <% } %>
                 </div>
-            <% } if (canEndAdventure) { %>
-                <div class="js-container-end-adventure-button">
-                    <button type="button" class="btn btn-danger js-btn-end-adventure">
-                        End Adventure
-                    </button>
-                </div>
-                <div class="js-container-end-adventure-confirm" style="display: none;">
-                    <p>
-                        Are you sure you want to end the adventure?
-                    </p>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-danger js-btn-end-adventure-confirm">
-                            Yes
-                        </button>
-                        <button type="button" class="btn btn-default js-btn-end-adventure-cancel">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            <% } %>
+            </div>
         </script>
 
         <script type="text/template" id="template-completed-adventure">
