@@ -213,12 +213,6 @@ $(function(){
             this.validateLogin();
 
 /*
-            if (this.user.get("username").length > 0 && this.user.get("password").length > 0 && false){
-                this.login({username: this.user.get("username"), password: this.user.get("password")});
-            } else {
-                this.vent.trigger("showView", "login");
-            };
-
             this.loadCompletedAdventures();
             this.loadAchievements();
 */
@@ -238,39 +232,31 @@ $(function(){
             var defaultTitleHtml = '<img src="/static/cyoa/logo_text.svg" style="display: inline-block; width: 110px; padding-bottom: 4px;">';
             var views = {
                 "loading": {
-                    titleHtml: 'Loading...',
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoadingView()) }
                 },
                 "login": {
-                    titleHtml: defaultTitleHtml,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoginView({model: self.user})) }
                 },
                 "home": {
-                    titleHtml: defaultTitleHtml,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new HomeView()); }
                 },
                 "profile": {
-                    titleHtml: 'Profile',
                     viewFunction: function(){
                         self.loadProfile();
                         self.layoutView.getRegion("main").show(new ProfileView({model: self.user}));
                     }
                 },
                 "adventure": {
-                    titleHtml: self.adventure.get("name"),
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AdventureLayoutView({model: self.adventure}));
                     }
-                    //TODO: do menu options go here? or maybe the menu's model should be set to self.adventure? or self!
                 },
                 "completedAdventures": {
-                    titleHtml: "Completed Adventures",
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new CompletedAdventuresView({collection: self.completedAdventures}));
                     }
                 },
                 "achievements": {
-                    titleHtml: "Achievements",
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AchievementsView({collection: self.achievements}));
                     }
@@ -571,7 +557,7 @@ $(function(){
             nav: "#region-nav",
             error: "#region-error",
             main: "#region-main"
-        },
+        }
 
     });
 
@@ -587,6 +573,7 @@ $(function(){
         initialize: function(){
             this.listenTo(app.vent, "viewChanged", this.render);
             this.listenTo(app.vent, "hideMenu", this.hideMenu);
+            this.listenTo(this.model.adventure, "change", this.render);
         },
 
         showMenu: function(e){
@@ -634,8 +621,12 @@ $(function(){
 
             if (this.model.currentView == "profile"){
                 data.titleHtml = "Profile";
-            } else if (this.model.currentView == "profile"){
-                data.titleHtml = "Profile";
+            } else if (this.model.currentView == "completedAdventures"){
+                data.titleHtml = "History";
+            } else if (this.model.currentView == "achievements"){
+                data.titleHtml = "Achievements";
+            } else if (this.model.currentView == "adventure" && this.model.adventure.get("name").length > 0){
+                data.titleHtml = this.model.adventure.get("name");
             };
 
             //limbo: logo
@@ -646,77 +637,6 @@ $(function(){
             return data;
         }
     });
-
-/*
-    var HeaderView = Marionette.ItemView.extend({
-        initialize: function(){
-            this.listenTo(app.vent, "viewChanged", this.viewChanged);
-        },
-
-        template: "#template-header",
-
-        events: {
-            "click .navbar-toggle": "showMenu",
-            "click .navbar-back": "goBack"
-        },
-
-        viewChanged: function(data){
-            this.$el.find(".navbar-brand").html(data.titleHtml);
-            this.$el.find(".navbar-toggle").toggle(!data.backButton);
-            this.$el.find(".navbar-back").toggle(data.backButton);
-        },
-
-        showMenu: function(e){
-            e.stopPropagation();
-            app.vent.trigger("showMenu");
-        },
-
-        goBack: function(e){
-            e.stopPropagation();
-            app.vent.trigger("showView", "home");
-        }
-    });
-
-    var MenuView = Marionette.ItemView.extend({
-
-        initialize: function(){
-            this.listenTo(app.vent, "showMenu", this.showMenu);
-            this.listenTo(app.vent, "hideMenu", this.hideMenu);
-
-            //this.listenTo(app.vent, "viewChanged", this.viewChanged);
-        },
-
-        template: "#template-menu",
-
-        events: {
-            "click button": "selectMenuOption"
-        },
-
-        selectMenuOption: function(e){
-            e.preventDefault();
-            var $el = $(e.target);
-            if ($el.data("view") != undefined){
-                app.vent.trigger("showView", $el.data("view"));
-            }
-            if ($el.data("action") != undefined){
-                app.vent.trigger("action", $el.data("action"));
-            }
-        },
-
-        menuClicked: function(e){
-            e.stopPropagation();
-        },
-
-        hideMenu: function(){
-            this.$el.parent().addClass("collapsed");
-        },
-
-        showMenu: function(){
-            this.$el.parent().removeClass("collapsed");
-        }
-
-    });
-*/
 
     var ErrorView = Marionette.ItemView.extend({
         template: "#template-noop",
@@ -845,7 +765,7 @@ $(function(){
         initialize: function(){
             var self = this;
 
-            this.listenTo(this.model, "change", this.render);
+            this.listenTo(this.model, "change:name", this.render);
             this.listenTo(this.model.get("users"), "change", this.hideInviteForm);
         },
 
@@ -1011,14 +931,15 @@ $(function(){
         },
 
         initialize: function(){
-            var self = this;
-            setTimeout(function(){
-                self.getRegion("history").show(new ActivitiesHistoryView({collection: self.model.get("activities")}));
-                if (self.model.get("isFinished") == false){
-                    self.getRegion("vote").show(new ActivitiesVoteView({model: self.model, collection: self.model.get("activities")}));
-                };
-            }, 0);
+        },
+
+        onRender: function(){
+            this.getRegion("history").show(new ActivitiesHistoryView({collection: this.model.get("activities")}));
+            if (this.model.get("isFinished") == false){
+                this.getRegion("vote").show(new ActivitiesVoteView({model: this.model, collection: this.model.get("activities")}));
+            };
         }
+
     });
 
     var AdventureOptionsView = Marionette.ItemView.extend({
@@ -1076,8 +997,6 @@ $(function(){
 
         childViewContainer: ".js-achievments"
     });
-
-
 
     new App();
 });
