@@ -18,11 +18,7 @@ from django.contrib.auth.models import User
 from models import AppUser, Adventure, AdventureUser, Activity, AdventureActivity, AdventureActivityVote
 
 def index(request):
-    requestData = {
-        "user": request.user,
-        "username": request.user.username,
-    }
-    return render(request, 'cyoa/index.html', requestData)
+    return render(request, 'cyoa/index.html')
 
 def api(request, method):
     methods = {
@@ -216,6 +212,10 @@ def invite_user(request):
 def start_next_activity(request):
     #TODO: use the filters/activity types posted to filter random choices. related - do we allow duplicates? what happens when you get to the end?
     adventure = Adventure.objects.get(adventureuser__user=request.user, date_finished=None)
+
+    #try to use brand new things
+    #when out of brand new things, use previous things that did not win the votes
+    #when we have to recycle previous vote winners, show some kind of message
 
     max_group = adventure.adventureactivity_set.all().aggregate(Max("group"))["group__max"]
     if max_group == None:

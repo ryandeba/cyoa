@@ -171,8 +171,9 @@ $(function(){
             this.layoutView = new ApplicationLayoutView();
             this.layoutView.render();
 
-            this.layoutView.getRegion("header").show(new HeaderView());
-            this.layoutView.getRegion("menu").show(new MenuView());
+            //this.layoutView.getRegion("header").show(new HeaderView());
+            //this.layoutView.getRegion("menu").show(new MenuView());
+            this.layoutView.getRegion("nav").show(new NavView({model: this}));
             this.layoutView.getRegion("error").show(new ErrorView());
 
             this.listenTo(this.vent, "validateLogin:success", this.loadAdventure);
@@ -238,22 +239,18 @@ $(function(){
             var views = {
                 "loading": {
                     titleHtml: 'Loading...',
-                    backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoadingView()) }
                 },
                 "login": {
                     titleHtml: defaultTitleHtml,
-                    backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new LoginView({model: self.user})) }
                 },
                 "home": {
                     titleHtml: defaultTitleHtml,
-                    backButton: false,
                     viewFunction: function(){ self.layoutView.getRegion("main").show(new HomeView()); }
                 },
                 "profile": {
                     titleHtml: 'Profile',
-                    backButton: true,
                     viewFunction: function(){
                         self.loadProfile();
                         self.layoutView.getRegion("main").show(new ProfileView({model: self.user}));
@@ -261,7 +258,6 @@ $(function(){
                 },
                 "adventure": {
                     titleHtml: self.adventure.get("name"),
-                    backButton: false, //TODO: this should be true when creating a new adventure
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AdventureLayoutView({model: self.adventure}));
                     }
@@ -269,14 +265,12 @@ $(function(){
                 },
                 "completedAdventures": {
                     titleHtml: "Completed Adventures",
-                    backButton: true,
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new CompletedAdventuresView({collection: self.completedAdventures}));
                     }
                 },
                 "achievements": {
                     titleHtml: "Achievements",
-                    backButton: true,
                     viewFunction: function(){
                         self.layoutView.getRegion("main").show(new AchievementsView({collection: self.achievements}));
                     }
@@ -574,14 +568,86 @@ $(function(){
         template: "#template-application",
 
         regions: {
-            header: "#region-header",
-            menu: "#region-menu",
+            nav: "#region-nav",
             error: "#region-error",
             main: "#region-main"
         },
 
     });
 
+    var NavView = Marionette.ItemView.extend({
+        template: "#template-nav",
+
+        events: {
+            "click .navbar-toggle.fa-bars": "showMenu",
+            "click .navbar-toggle.fa-arrow-left": "goBack",
+            "click button": "selectMenuOption"
+        },
+
+        initialize: function(){
+            this.listenTo(app.vent, "viewChanged", this.render);
+            this.listenTo(app.vent, "hideMenu", this.hideMenu);
+        },
+
+        showMenu: function(e){
+            e.stopPropagation();
+            this.$el.find("#region-menu").removeClass("collapsed");
+        },
+
+        hideMenu: function(){
+            this.$el.find("#region-menu").addClass("collapsed");
+        },
+
+        goBack: function(e){
+            e.stopPropagation();
+            app.vent.trigger("showView", "home");
+        },
+
+        selectMenuOption: function(e){
+            e.preventDefault();
+            var $el = $(e.target);
+            if ($el.data("view") != undefined){
+                app.vent.trigger("showView", $el.data("view"));
+            }
+            if ($el.data("action") != undefined){
+                app.vent.trigger("action", $el.data("action"));
+            }
+        },
+
+        serializeData: function(){
+            var logoHtml = '<img src="/static/cyoa/logo_text.svg" style="display: inline-block; width: 110px; padding-bottom: 4px;">';
+
+            var data = {
+                showNav: this.model.user.get("username").length > 0,
+                showLogoutButton: this.model.user.get("username").length > 0,
+                showBackButton: false,
+                titleHtml: logoHtml
+            };
+
+            if (["profile","completedAdventures","achievements"].indexOf(this.model.currentView) > -1){
+                data.showBackButton = true;
+            };
+
+            if (this.model.currentView == "adventure" && this.model.adventure.get("name").length == 0){
+                data.showBackButton = true;
+            };
+
+            if (this.model.currentView == "profile"){
+                data.titleHtml = "Profile";
+            } else if (this.model.currentView == "profile"){
+                data.titleHtml = "Profile";
+            };
+
+            //limbo: logo
+            //adventure: name of adventure
+            //history: history
+            //achivements: achievements
+
+            return data;
+        }
+    });
+
+/*
     var HeaderView = Marionette.ItemView.extend({
         initialize: function(){
             this.listenTo(app.vent, "viewChanged", this.viewChanged);
@@ -650,6 +716,7 @@ $(function(){
         }
 
     });
+*/
 
     var ErrorView = Marionette.ItemView.extend({
         template: "#template-noop",

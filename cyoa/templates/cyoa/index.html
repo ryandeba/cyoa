@@ -15,9 +15,6 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
 
         <script src="/static/cyoa/jquery.min.js"></script>
-        <!--
-        <script src="/static/cyoa/bootstrap.min.js"></script>
-        -->
 
         <script src="/static/cyoa/underscore-min.js"></script>
         <script src="/static/cyoa/backbone-min.js"></script>
@@ -35,8 +32,6 @@
                 background-position: center bottom;
             }
             body {
-                padding-top: 60px;
-
                 font-size: 12px;
 
                 color: #fff;
@@ -182,12 +177,12 @@
                 background-color: #e74c3c;
 
                 position: absolute;
-                top: 10px;
+                top: -30px;
 
                 padding: 8px;
                 width: 100%;
 
-                transition: all 0.3s;
+                transition: all 0.1s;
 
                 z-index: 100;
             }
@@ -325,13 +320,40 @@
 
         </style>
 
-        <script type="text/template" id="template-noop"></script>
+        <script type="text/template" id="template-noop">
+        </script>
 
         <script type="text/template" id="template-application">
-            <nav id="region-header" class="navbar navbar-default navbar-fixed-top"></nav>
-            <nav id="region-menu" class="collapsed"></nav>
+            <div id="region-nav"></div>
             <div id="region-error"></div>
             <div class="container" id="region-main"></div>
+        </script>
+
+        <script type="text/template" id="template-nav">
+            <% if (showNav){ %>
+                <nav class="navbar navbar-default">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle fa <% if (showBackButton){ %>fa-arrow-left<% } else { %>fa-bars<% } %>"></button>
+                            <span class="navbar-brand">
+                                <%= titleHtml %>
+                            </span>
+                        </div>
+                    </div>
+                </nav>
+                <nav id="region-menu" class="collapsed">
+                    <button type="button" class="btn btn-default" data-view="profile">
+                        <i class="fa fa-user"></i>
+                        Profile
+                    </button>
+                    <% if (showLogoutButton){ %>
+                    <button type="button" class="btn btn-default" data-action="logout">
+                        <i class="fa fa-sign-out"></i>
+                        Log out
+                    </button>
+                    <% } %>
+                </nav>
+            <% } %>
         </script>
 
         <script type="text/template" id="template-header">
