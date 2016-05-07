@@ -21,6 +21,10 @@
         <script src="/static/cyoa/backbone.marionette.min.js"></script>
         <script src="/static/cyoa/app.js"></script>
 
+        <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick.css"/>
+        <link rel="stylesheet" type="text/css" href="/static/cyoa/slick-theme.css"/>
+        <script type="text/javascript" src="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick.min.js"></script>
+
         <style>
             html, body {
                 height: 100%;
@@ -412,22 +416,39 @@
         </script>
 
         <script type="text/template" id="template-profile">
+
             <div class="row">
-                <div class="col-xs-3">
-                </div>
+                <div class="col-xs-12">
+                    <div class="js-container-avatars">
 
-                <div class="col-xs-6">
+                            <div class="adventure-user xlarge">
+                                <i class="fa fa-user"></i>
+                            </div>
 
-                    <div class="adventure-user large">
-                        <i class="fa fa-user"></i>
-                        <span class="adventure-user-username js-label-invite"><%= username %></span>
+                            <div class="adventure-user xlarge">
+                                <i class="fa fa-user"></i>
+                            </div>
+
+                            <div class="adventure-user xlarge">
+                                <i class="fa fa-user"></i>
+                            </div>
+
+                            <div class="adventure-user xlarge">
+                                <i class="fa fa-user"></i>
+                            </div>
+
+                            <div class="adventure-user xlarge">
+                                <i class="fa fa-user"></i>
+                            </div>
+
+                            <div class="adventure-user xlarge">
+                                <i class="fa fa-user"></i>
+                            </div>
+
                     </div>
-
-                </div>
-
-                <div class="col-xs-3">
                 </div>
             </div>
+
             <div class="row" style="margin-top: 40px;">
                 <div class="col-xs-12">
                     <form class="js-form-profile">

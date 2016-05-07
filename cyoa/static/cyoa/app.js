@@ -734,6 +734,15 @@ self.vent.trigger("showView", "profile");
             this.model.set($el.data("field"), $el.val(), {silent: true});
         },
 
+        onRender: function(){
+            this.$el.find('.js-container-avatars').slick({
+              arrows: true,
+              centerMode: true,
+              slidesToShow: 3
+            });
+
+        },
+
         saveProfile: function(e){
             e.preventDefault();
             app.vent.trigger("saveProfile");
