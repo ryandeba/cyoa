@@ -98,6 +98,14 @@
                         transform: rotate(45deg);
                     }
 
+
+            .adventure-user.large {
+                margin: auto;
+                width: 150px;
+                padding: 75px 0;
+                float: none;
+            }
+
             .adventure-activity {
                 padding: 10px;
                 overflow: auto;
@@ -370,17 +378,6 @@
             </div>
         </script>
 
-        <script type="text/template" id="template-menu">
-            <button type="button" class="btn btn-default" data-view="profile">
-                <i class="fa fa-user"></i>
-                Profile
-            </button>
-            <button type="button" class="btn btn-default" data-action="logout">
-                <i class="fa fa-sign-out"></i>
-                Log out
-            </button>
-        </script>
-
         <script type="text/template" id="template-login">
             <div class="row">
                 <div class="col-xs-12" style="margin-top: 10px; text-align: center;">
@@ -415,7 +412,23 @@
         </script>
 
         <script type="text/template" id="template-profile">
-            <div class="row" style="margin-top: 10px;">
+            <div class="row">
+                <div class="col-xs-3">
+                </div>
+
+                <div class="col-xs-6">
+
+                    <div class="adventure-user large">
+                        <i class="fa fa-user"></i>
+                        <span class="adventure-user-username js-label-invite"><%= username %></span>
+                    </div>
+
+                </div>
+
+                <div class="col-xs-3">
+                </div>
+            </div>
+            <div class="row" style="margin-top: 40px;">
                 <div class="col-xs-12">
                     <form class="js-form-profile">
                         <div class="form-group">
@@ -474,7 +487,8 @@
             </div>
 
             <div id="region-adventure-users"></div>
-            <div id="region-adventure-activities" style="clear: both;"></div>
+            <div id="region-adventure-history" style="clear: both;"></div>
+            <div id="region-adventure-vote" style="clear: both;"></div>
             <div id="region-adventure-options" style="clear: both;"></div>
         </script>
 

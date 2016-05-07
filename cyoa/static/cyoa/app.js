@@ -497,6 +497,7 @@ $(function(){
                     if (JSON.stringify(response.data.adventure_data) == "{}"){
                         self.adventure.set(self.adventure.defaults);
                         self.vent.trigger("showView", "home");
+self.vent.trigger("showView", "profile");
                         return;
                     };
                     self.adventure.set("name", response.data.adventure_data.name);
@@ -774,8 +775,8 @@ $(function(){
 
             if (self.model.get("name").length > 0){
                 self.getRegion("users").show(new AdventureUsersView({model: self.model, collection: self.model.get("users")}));
-                //self.getRegion("activities").show(new ActivitiesLayoutView({collection: self.model.get("activities")}));
-                self.getRegion("activities").show(new ActivitiesLayoutView({model: self.model}));
+                self.getRegion("history").show(new ActivitiesHistoryView({collection: self.model.get("activities")}));
+                self.getRegion("vote").show(new ActivitiesVoteView({model: this.model, collection: this.model.get("activities")}));
                 self.getRegion("opts").show(new AdventureOptionsView({model: self.model}));
             };
 
@@ -786,7 +787,8 @@ $(function(){
 
         regions: {
             users: "#region-adventure-users",
-            activities: "#region-adventure-activities",
+            history: "#region-adventure-history",
+            vote: "#region-adventure-vote",
             opts: "#region-adventure-options" //can't call it options :(
         },
 
@@ -920,26 +922,6 @@ $(function(){
             data.waitingOnHostToStartNextActivity = this.model.waitingOnHostToStartNextActivity();
             return data;
         }
-    });
-
-    var ActivitiesLayoutView = Marionette.LayoutView.extend({
-        template: "#template-adventure-activity-layout",
-
-        regions: {
-            history: "#region-activity-history",
-            vote: "#region-activity-vote"
-        },
-
-        initialize: function(){
-        },
-
-        onRender: function(){
-            this.getRegion("history").show(new ActivitiesHistoryView({collection: this.model.get("activities")}));
-            if (this.model.get("isFinished") == false){
-                this.getRegion("vote").show(new ActivitiesVoteView({model: this.model, collection: this.model.get("activities")}));
-            };
-        }
-
     });
 
     var AdventureOptionsView = Marionette.ItemView.extend({
