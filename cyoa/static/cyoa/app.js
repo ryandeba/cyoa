@@ -886,7 +886,11 @@ self.vent.trigger("showView", "profile");
     });
 
     var ActivitiesHistoryView = Marionette.CollectionView.extend({
-        childView: ActivityHistoryView
+        childView: ActivityHistoryView,
+
+        initialize: function(){
+            this.listenTo(this.collection, "change", this.render);
+        }
     });
 
     var ActivityVoteView = Marionette.ItemView.extend({
@@ -942,6 +946,10 @@ self.vent.trigger("showView", "profile");
             "click .js-btn-end-adventure": "endAdventure",
             "click .js-btn-end-adventure-confirm": "confirmEndAdventure",
             "click .js-btn-end-adventure-cancel": "cancelEndAdventure"
+        },
+
+        initialize: function(){
+            this.listenTo(this.model.get("activities"), "change", this.render);
         },
 
         chooseActivityOptions: function(){
